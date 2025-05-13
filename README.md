@@ -1,8 +1,42 @@
-# Problem Statement
+# 📅 Weekly Project Report Template
+
+**Week:** 1 (05/05/2025 - 05/11/2025)
+
+**Participants:** Manuel Tamayo Moreno, Yuyang Cao, Marcel Skalski
+
+| Student Name | Weekly Progress | Impediments | Promises (Next Week) | Comments |
+| :----------- | :-------------- | :---------- | :------------------- | :------- |
+| Manuel Tamayo Moreno | Come up with Problem Statement |                  | Create System Architecture |             |
+| Yuyang Cao | Come up with Problem Statement |                  | Create System Architecture |             |
+| Marcel Skalski | Come up with Problem Statement |                  | Create System Architecture |             |
+
+---
+
+**Week:** 2 (05/12/2025 - 05/18/2025)
+
+**Participants:** Manuel Tamayo Moreno, Yuyang Cao, Marcel Skalski
+
+| Student Name | Weekly Progress | Impediments | Promises (Next Week) | Comments |
+| :----------- | :-------------- | :---------- | :------------------- | :------- |
+| Manuel Tamayo Moreno |  |  |  |  |
+| Yuyang Cao |  |  |  |  |
+| Marcel Skalski |  |  |  |  |
+
+---
+
+## Discussion
+
+Use this space for any team-wide questions, decisions or side-conversations that emerged from your individual updates:
+
+* **Requester:** 
+  * **Topic:** 
+  * **Decision:**
+ 
+---
+
+# 📌 Problem Statement
 
 **Study Assistant App**
-
-### 📌 **Problem Statement**
 
 **Main Functionality:**
 
