@@ -1,0 +1,25 @@
+# Gradle build outputs
+/build/
+/out/
+/.gradle/
+
+/# OS files
+.DS_Store
+
+# Logs
+*.log
+
+# IntelliJ IDEA
+/.idea/
+/*.iml
+
+# Eclipse
+/.classpath
+/.project
+/.settings/
+
+/# VS Code
+.vscode/
+
+# Spring Boot fat JARs (if accidentally built into the tree)
+/build/libs/*.jar
