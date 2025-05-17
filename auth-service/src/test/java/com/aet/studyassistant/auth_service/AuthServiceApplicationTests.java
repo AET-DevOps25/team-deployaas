@@ -1,10 +1,10 @@
-package com.aet.studyassistant;
+package com.aet.studyassistant.auth_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class StudyassistantApplicationTests {
+class AuthServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

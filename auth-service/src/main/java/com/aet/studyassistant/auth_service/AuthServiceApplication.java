@@ -1,13 +1,13 @@
-package com.aet.studyassistant;
+package com.aet.studyassistant.auth_service;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class StudyassistantApplication {
+public class AuthServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(StudyassistantApplication.class, args);
+		SpringApplication.run(AuthServiceApplication.class, args);
 	}
 
 }
