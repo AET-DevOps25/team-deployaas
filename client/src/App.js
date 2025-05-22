@@ -6,11 +6,6 @@ function App() {
   const [flashcardMessage, setFlashcardMessage] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/auth/test")
-      .then((res) => res.text())
-      .then(setAuthMessage)
-      .catch((err) => console.error("Error fetching from auth service:", err));
-
     fetch("http://localhost:8081/api/quiz/test")
       .then((res) => res.text())
       .then(setQuizMessage)
@@ -19,9 +14,12 @@ function App() {
     fetch("http://localhost:8082/api/flashcard/test")
       .then((res) => res.text())
       .then(setFlashcardMessage)
-      .catch((err) =>
-        console.error("Error fetching from flashcard service:", err)
-      );
+      .catch((err) => console.error("Error fetching from flashcard service:", err));
+
+    fetch("http://localhost:8083/api/auth/test")
+      .then((res) => res.text())
+      .then(setAuthMessage)
+      .catch((err) => console.error("Error fetching from auth service:", err));
   }, []);
 
   return (
