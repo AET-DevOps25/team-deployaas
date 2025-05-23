@@ -28,5 +28,55 @@ services:
     volumes:
       - ./database/pgadmin4/servers.json:/pgadmin4/servers.json:ro
 
+  quiz-service:
+    build: ./quiz-service
+    container_name: studyapp_quiz_service
+    restart: always
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+
+  flashcard-service:
+    build: ./flashcard-service
+    container_name: studyapp_flashcard_service
+    restart: always
+    ports:
+      - "8082:8082"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+
+  auth-service:
+    build: ./auth-service
+    container_name: studyapp_auth_service
+    restart: always
+    ports:
+      - "8083:8083"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+
+  client:
+    build: ./client
+    container_name: studyapp_client
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - quiz-service
+      - flashcard-service
+
 volumes:
   pgdata:
