@@ -1,24 +1,45 @@
 package com.aet.studyassistant.quiz_service.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
 import java.util.List;
 import java.util.UUID;
 
+@Entity
+@Table(name = "chapters")
 public class Chapter {
+    @Id
+    @Column(name = "chapter_id")
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-    private String name;
-    private List<Quiz> quizzes;
 
-    public Chapter(UUID id, String name, List<Quiz> quizzes) {
-        this.id = id;
+    @Column(name = "name", nullable = false)
+    private String name;
+
+    @Column(name = "course_id", nullable = false)
+    private UUID courseId;
+
+    @OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("ordering ASC")
+    @JsonManagedReference
+    private List<Question> questions;
+
+    // Default constructor for JPA
+    public Chapter() {}
+
+    public Chapter(String name, UUID courseId) {
         this.name = name;
-        this.quizzes = quizzes;
+        this.courseId = courseId;
     }
 
+    // Getters and Setters
     public UUID getId() { return id; }
     public String getName() { return name; }
-    public List<Quiz> getQuizzes() { return quizzes; }
+    public UUID getCourseId() { return courseId; }
+    public List<Question> getQuestions() { return questions; }
 
     public void setId(UUID id) { this.id = id; }
     public void setName(String name) { this.name = name; }
-    public void setQuizzes(List<Quiz> quizzes) { this.quizzes = quizzes; }
+    public void setCourseId(UUID courseId) { this.courseId = courseId; }
+    public void setQuestions(List<Question> questions) { this.questions = questions; }
 }
