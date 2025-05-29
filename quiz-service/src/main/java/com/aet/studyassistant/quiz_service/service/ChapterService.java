@@ -1,31 +1,33 @@
 package com.aet.studyassistant.quiz_service.service;
 
 import com.aet.studyassistant.quiz_service.model.Chapter;
-import com.aet.studyassistant.quiz_service.model.Quiz;
+import com.aet.studyassistant.quiz_service.repository.ChapterRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ChapterService {
-    private final List<Chapter> chapters;
+    
+    private final ChapterRepository chapterRepository;
 
-    public ChapterService() {
-        // Demo data
-        chapters = new ArrayList<>();
-        Chapter chapter1 = new Chapter(UUID.randomUUID(), "Continuous Integration", Arrays.asList(
-                new Quiz(UUID.randomUUID(), "CI Basics"),
-                new Quiz(UUID.randomUUID(), "CI Tools")
-        ));
-        Chapter chapter2 = new Chapter(UUID.randomUUID(), "Infrastructure as Code", Arrays.asList(
-                new Quiz(UUID.randomUUID(), "IaC Concepts"),
-                new Quiz(UUID.randomUUID(), "Terraform Basics")
-        ));
-        chapters.add(chapter1);
-        chapters.add(chapter2);
+    @Autowired
+    public ChapterService(ChapterRepository chapterRepository) {
+        this.chapterRepository = chapterRepository;
     }
 
     public List<Chapter> getAllChapters() {
-        return chapters;
+        return chapterRepository.findAll();
+    }
+
+    public List<Chapter> getChaptersByCourseId(UUID courseId) {
+        return chapterRepository.findByCourseId(courseId);
+    }
+
+    public Optional<Chapter> getChapterById(UUID chapterId) {
+        return chapterRepository.findById(chapterId);
     }
 }
