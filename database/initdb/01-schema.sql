@@ -23,42 +23,20 @@ CREATE TABLE user_courses
     PRIMARY KEY (user_id, course_id)
 );
 
-CREATE TABLE quizzes
+CREATE TABLE chapters
 (
-    quiz_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    title     TEXT NOT NULL,
-    max_score REAL NOT NULL    DEFAULT 100.0
+    chapter_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name       TEXT NOT NULL,
+    course_id  UUID NOT NULL REFERENCES courses (course_id) ON DELETE CASCADE
 );
-
 
 CREATE TABLE questions
 (
-    question_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    text        TEXT NOT NULL,
-    type        TEXT NOT NULL CHECK (type IN ('MCQ', 'OPEN'))
-);
-
-CREATE TABLE quiz_questions
-(
-    quiz_id     UUID NOT NULL REFERENCES quizzes (quiz_id) ON DELETE CASCADE,
-    question_id UUID NOT NULL
-        REFERENCES questions (question_id) ON DELETE CASCADE,
-    ordering    INT  NOT NULL,
-    PRIMARY KEY (quiz_id, question_id)
-);
-
-CREATE TABLE options
-(
-    option_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    question_id UUID    NOT NULL REFERENCES questions (question_id) ON DELETE CASCADE,
-    text        TEXT    NOT NULL,
-    is_correct  BOOLEAN NOT NULL
-);
-
-CREATE TABLE open_question
-(
-    question_id  UUID PRIMARY KEY REFERENCES questions (question_id) ON DELETE CASCADE,
-    model_answer TEXT NOT NULL
+    question_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    text            TEXT NOT NULL,
+    sample_solution TEXT NOT NULL,
+    chapter_id      UUID NOT NULL REFERENCES chapters (chapter_id) ON DELETE CASCADE,
+    ordering        INT  NOT NULL DEFAULT 1
 );
 
 CREATE TABLE feedback
