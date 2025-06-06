@@ -1,0 +1,82 @@
+services:
+  db:
+    image: postgres:14
+    container_name: studyapp_db
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/initdb:/docker-entrypoint-initdb.d
+
+  pgadmin:
+    image: dpage/pgadmin4:6.21
+    container_name: studyapp_pgadmin
+    restart: always
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@you.com
+      PGADMIN_DEFAULT_PASSWORD: AdminPass123!
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    volumes:
+      - ./database/pgadmin4/servers.json:/pgadmin4/servers.json:ro
+
+  quiz-service:
+    build: ./quiz-service
+    container_name: studyapp_quiz_service
+    restart: always
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+
+  flashcard-service:
+    build: ./flashcard-service
+    container_name: studyapp_flashcard_service
+    restart: always
+    ports:
+      - "8082:8082"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+
+  auth-service:
+    build: ./auth-service
+    container_name: studyapp_auth_service
+    restart: always
+    ports:
+      - "8083:8083"
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+
+  client:
+    build: ./client
+    container_name: studyapp_client
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - quiz-service
+      - flashcard-service
+
+volumes:
+  pgdata:
