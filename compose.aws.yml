@@ -12,7 +12,7 @@ services:
       - ./database/initdb:/docker-entrypoint-initdb.d
 
   quiz-service:
-    build: ./quiz-service
+    image: ghcr.io/yuyangc-gh/team-deployaas/quiz-service:latest
     container_name: studyapp_quiz_service
     restart: always
     depends_on:
@@ -25,7 +25,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
   flashcard-service:
-    build: ./flashcard-service
+    image: ghcr.io/yuyangc-gh/team-deployaas/flashcard-service:latest
     container_name: studyapp_flashcard_service
     restart: always
     depends_on:
@@ -38,7 +38,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
   auth-service:
-    build: ./auth-service
+    image: ghcr.io/yuyangc-gh/team-deployaas/auth-service:latest
     container_name: studyapp_auth_service
     restart: always
     depends_on:
@@ -51,7 +51,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
   client:
-    build: ./client
+    image: ghcr.io/yuyangc-gh/team-deployaas/client:latest
     container_name: studyapp_client
     restart: always
     ports:
