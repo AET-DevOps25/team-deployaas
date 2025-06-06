@@ -376,5 +376,4 @@ sketch
 ### Vue ###
 # gitignore template for Vue.js projects
 #
-# Recommended template: Node.gitignore/data/
-/data/
+# Recommended template: Node.gitignore
