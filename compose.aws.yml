@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.9"
 
 services:
   db:
@@ -11,55 +11,66 @@ services:
       - pgdata:/var/lib/postgresql/data
       - ./database/initdb:/docker-entrypoint-initdb.d
 
+  pgadmin:
+    image: dpage/pgadmin4:6.21
+    container_name: studyapp_pgadmin
+    restart: always
+    env_file:
+      - .env.prod
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@you.com
+      PGADMIN_DEFAULT_PASSWORD: AdminPass123!
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    volumes:
+      - ./database/pgadmin4/servers.json:/pgadmin4/servers.json:ro
+
   quiz-service:
-    image: ghcr.io/yuyangc-gh/team-deployaas/quiz-service:latest
+    image: ghcr.io/your-org/studyapp/quiz-service:latest
     container_name: studyapp_quiz_service
     restart: always
     depends_on:
       - db
-    ports:
-      - "8081:8081"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
   flashcard-service:
-    image: ghcr.io/yuyangc-gh/team-deployaas/flashcard-service:latest
+    image: ghcr.io/your-org/studyapp/flashcard-service:latest
     container_name: studyapp_flashcard_service
     restart: always
     depends_on:
       - db
-    ports:
-      - "8082:8082"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
   auth-service:
-    image: ghcr.io/yuyangc-gh/team-deployaas/auth-service:latest
+    image: ghcr.io/your-org/studyapp/auth-service:latest
     container_name: studyapp_auth_service
     restart: always
     depends_on:
       - db
-    ports:
-      - "8083:8083"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
   client:
-    image: ghcr.io/yuyangc-gh/team-deployaas/client:latest
+    image: ghcr.io/your-org/studyapp/client:latest
     container_name: studyapp_client
     restart: always
-    ports:
-      - "3000:3000"
     depends_on:
       - auth-service
       - quiz-service
       - flashcard-service
+    environment:
+      - PUBLIC_API_URL=${PUBLIC_API_URL}
 
 volumes:
   pgdata:
