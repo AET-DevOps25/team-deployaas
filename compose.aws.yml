@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:14
@@ -29,7 +27,7 @@ services:
       - ./database/pgadmin4/servers.json:/pgadmin4/servers.json:ro
 
   quiz-service:
-    image: ghcr.io/your-org/studyapp/quiz-service:latest
+    image: ghcr.io/yuyangc-gh/team-deployaas/quiz-service:latest
     container_name: studyapp_quiz_service
     restart: always
     depends_on:
@@ -40,7 +38,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
   flashcard-service:
-    image: ghcr.io/your-org/studyapp/flashcard-service:latest
+    image: ghcr.io/yuyangc-gh/team-deployaas/flashcard-service:latest
     container_name: studyapp_flashcard_service
     restart: always
     depends_on:
@@ -51,7 +49,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
   auth-service:
-    image: ghcr.io/your-org/studyapp/auth-service:latest
+    image: ghcr.io/yuyangc-gh/team-deployaas/auth-service:latest
     container_name: studyapp_auth_service
     restart: always
     depends_on:
@@ -62,7 +60,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
   client:
-    image: ghcr.io/your-org/studyapp/client:latest
+    image: ghcr.io/yuyangc-gh/team-deployaas/client:latest
     container_name: studyapp_client
     restart: always
     depends_on:
