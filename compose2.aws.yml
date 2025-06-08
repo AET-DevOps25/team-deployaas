@@ -1,0 +1,131 @@
+version: "3.9"
+
+services:
+  reverse-proxy:
+    image: traefik:v3.4
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedByDefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@you.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - traefik
+    restart: unless-stopped
+
+  db:
+    image: postgres:14
+    container_name: studyapp_db
+    env_file:
+      - .env.prod
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/initdb:/docker-entrypoint-initdb.d:ro
+    networks:
+      - traefik
+    restart: always
+
+  pgadmin:
+    image: dpage/pgadmin4:6.21
+    container_name: studyapp_pgadmin
+    env_file:
+      - .env.prod
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    volumes:
+      - ./database/pgadmin4/servers.json:/pgadmin4/servers.json:ro
+    networks:
+      - traefik
+    restart: always
+
+  quiz-service:
+    image: ghcr.io/yuyangc-gh/team-deployaas/quiz-service:latest
+    container_name: studyapp_quiz_service
+    env_file:
+      - .env.prod
+    depends_on:
+      - db
+    labels:
+      traefik.enable:                      "true"
+      traefik.http.routers.quiz.entrypoints:   "websecure"
+      traefik.http.routers.quiz.rule:           "Host(`${QUIZ_HOST}`)"
+      traefik.http.routers.quiz.tls.certresolver: "letsencrypt"
+      traefik.http.services.quiz.loadbalancer.server.port: "8081"
+    networks:
+      - traefik
+    restart: always
+
+  flashcard-service:
+    image: ghcr.io/yuyangc-gh/team-deployaas/flashcard-service:latest
+    container_name: studyapp_flashcard_service
+    env_file:
+      - .env.prod
+    depends_on:
+      - db
+    labels:
+      traefik.enable:                            "true"
+      traefik.http.routers.flashcard.entrypoints:   "websecure"
+      traefik.http.routers.flashcard.rule:           "Host(`${FLASHCARD_HOST}`)"
+      traefik.http.routers.flashcard.tls.certresolver: "letsencrypt"
+      traefik.http.services.flashcard.loadbalancer.server.port: "8082"
+    networks:
+      - traefik
+    restart: always
+
+  auth-service:
+    image: ghcr.io/yuyangc-gh/team-deployaas/auth-service:latest
+    container_name: studyapp_auth_service
+    env_file:
+      - .env.prod
+    depends_on:
+      - db
+    labels:
+      traefik.enable:                         "true"
+      traefik.http.routers.auth.entrypoints:    "websecure"
+      traefik.http.routers.auth.rule:            "Host(`${AUTH_HOST}`)"
+      traefik.http.routers.auth.tls.certresolver: "letsencrypt"
+      traefik.http.services.auth.loadbalancer.server.port: "8083"
+    networks:
+      - traefik
+    restart: always
+
+  client:
+    image: ghcr.io/yuyangc-gh/team-deployaas/client:latest
+    container_name: studyapp_client
+    env_file:
+      - .env.prod
+    depends_on:
+      - auth-service
+      - quiz-service
+      - flashcard-service
+    labels:
+      traefik.enable:                           "true"
+      traefik.http.routers.client.entrypoints:     "websecure"
+      traefik.http.routers.client.rule:             "Host(`${CLIENT_HOST}`)"
+      traefik.http.routers.client.tls.certresolver:  "letsencrypt"
+      traefik.http.services.client.loadbalancer.server.port: "3000"
+      traefik.http.middlewares.client-compress.compress: "true"
+      traefik.http.routers.client.middlewares:       "client-compress"
+    networks:
+      - traefik
+    restart: always
+
+volumes:
+  pgdata:
+
+networks:
+  traefik:
+    driver: bridge
