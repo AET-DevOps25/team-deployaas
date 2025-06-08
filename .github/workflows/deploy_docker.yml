@@ -49,6 +49,7 @@ jobs:
           username: ${{ vars.AWS_EC2_USER }}
           key: ${{ secrets.AWS_EC2_PRIVATE_KEY }}
           script: |
+            sudo chown -R $USER:$USER ~/client
             cd ~/client
             rm -f .env.production
             touch .env.production
