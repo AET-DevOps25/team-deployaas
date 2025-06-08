@@ -2,6 +2,8 @@ name: Build Docker Images
 
 on:
   push:
+    branches:
+      - main  # or your deployment branch
 
 jobs:
   build:
@@ -26,7 +28,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # <<<  ADD THIS STEP  >>>  
+      # Dynamically generate client/.env.production for React only
       - name: Write React prod env
         if: matrix.service == 'client'
         run: |
