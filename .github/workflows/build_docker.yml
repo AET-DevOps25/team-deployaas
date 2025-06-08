@@ -26,16 +26,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Dynamically generate client/.env.production for React only
-      - name: Write React prod env
-        if: matrix.service == 'client'
-        run: |
-          cat > client/.env.production <<EOF
-          REACT_APP_AUTH_HOST=${{ vars.AUTH_HOST }}
-          REACT_APP_QUIZ_HOST=${{ vars.QUIZ_HOST }}
-          REACT_APP_FLASHCARD_HOST=${{ vars.FLASHCARD_HOST }}
-          EOF
-
       - name: Extract Docker Metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -53,3 +43,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            REACT_APP_AUTH_HOST=auth.${{ vars.EC2_PUBLIC_IP }}.nip.io
+            REACT_APP_QUIZ_HOST=quiz.${{ vars.EC2_PUBLIC_IP }}.nip.io
+            REACT_APP_FLASHCARD_HOST=flashcard.${{ vars.EC2_PUBLIC_IP }}.nip.io
