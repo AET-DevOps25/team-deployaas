@@ -37,10 +37,11 @@ jobs:
             echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env.prod
             echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env.prod
             echo "CLIENT_HOST=client.${{ vars.EC2_PUBLIC_IP }}.nip.io" >> .env.prod
-            echo "SERVER_HOST=api.${{ vars.EC2_PUBLIC_IP }}.nip.io" >> .env.prod
             echo "PUBLIC_API_URL=https://api.${{ vars.EC2_PUBLIC_IP }}.nip.io/api" >> .env.prod
-            
-
+            echo "AUTH_HOST=auth.${{ vars.EC2_PUBLIC_IP }}.nip.io" >> .env.prod
+            echo "FLASHCARD_HOST=flashcard.${{ vars.EC2_PUBLIC_IP }}.nip.io" >> .env.prod
+            echo "QUIZ_HOST=quiz.${{ vars.EC2_PUBLIC_IP }}.nip.io" >> .env.prod
+              
       - name: Deploy Containers with Docker Compose
         uses: appleboy/ssh-action@v1.0.3
         with:
