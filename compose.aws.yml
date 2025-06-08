@@ -62,7 +62,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.quiz.rule=Host($${QUIZ_HOST})"
+      - "traefik.http.routers.quiz.rule=Host(`$${QUIZ_HOST}`)"
       - "traefik.http.services.quiz.loadbalancer.server.port=8081"
       - "traefik.http.routers.quiz.entrypoints=websecure"
       - "traefik.http.routers.quiz.tls.certresolver=letsencrypt"
@@ -83,7 +83,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.flashcard.rule=Host($${FLASHCARD_HOST})"
+      - "traefik.http.routers.flashcard.rule=Host(`$${FLASHCARD_HOST}`)"
       - "traefik.http.services.flashcard.loadbalancer.server.port=8082"
       - "traefik.http.routers.flashcard.entrypoints=websecure"
       - "traefik.http.routers.flashcard.tls.certresolver=letsencrypt"
@@ -104,7 +104,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.auth.rule=Host($${AUTH_HOST})"
+      - "traefik.http.routers.auth.rule=Host(`$${AUTH_HOST}`)"
       - "traefik.http.services.auth.loadbalancer.server.port=8083"
       - "traefik.http.routers.auth.entrypoints=websecure"
       - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
@@ -123,9 +123,11 @@ services:
       - flashcard-service
     environment:
       - PUBLIC_API_URL=https://$${AUTH_HOST}
+    volumes:
+      - ./client/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.client.rule=Host($${CLIENT_HOST})"
+      - "traefik.http.routers.client.rule=Host(`$${CLIENT_HOST}`)"
       - "traefik.http.services.client.loadbalancer.server.port=3000"
       - "traefik.http.routers.client.entrypoints=websecure"
       - "traefik.http.routers.client.tls.certresolver=letsencrypt"
