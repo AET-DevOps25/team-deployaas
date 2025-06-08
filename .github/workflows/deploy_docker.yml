@@ -41,6 +41,7 @@ jobs:
             echo "AUTH_HOST=auth.${{ vars.EC2_PUBLIC_IP }}.nip.io" >> .env.prod
             echo "FLASHCARD_HOST=flashcard.${{ vars.EC2_PUBLIC_IP }}.nip.io" >> .env.prod
             echo "QUIZ_HOST=quiz.${{ vars.EC2_PUBLIC_IP }}.nip.io" >> .env.prod
+            echo "FRONTEND_ORIGIN=https://client.${{ vars.EC2_PUBLIC_IP }}.nip.io" >> .env.prod
 
       - name: Deploy Containers with Docker Compose
         uses: appleboy/ssh-action@v1.0.3
