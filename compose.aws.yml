@@ -114,7 +114,7 @@ services:
     networks:
       - traefik
 
-    client:
+  client:
     image: ghcr.io/yuyangc-gh/team-deployaas/client:latest
     container_name: studyapp_client
     env_file:
