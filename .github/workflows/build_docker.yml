@@ -1,8 +1,8 @@
 name: Build Docker Images
 
 on:
-  push:  
-  
+  push:
+
 jobs:
   build:
     name: Build & Push Docker Images
@@ -25,6 +25,16 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      # <<<  ADD THIS STEP  >>>  
+      - name: Write React prod env
+        if: matrix.service == 'client'
+        run: |
+          cat > client/.env.production <<EOF
+          REACT_APP_AUTH_HOST=${{ vars.AUTH_HOST }}
+          REACT_APP_QUIZ_HOST=${{ vars.QUIZ_HOST }}
+          REACT_APP_FLASHCARD_HOST=${{ vars.FLASHCARD_HOST }}
+          EOF
 
       - name: Extract Docker Metadata
         id: meta
