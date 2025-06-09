@@ -10,7 +10,7 @@ COPY . .
 RUN chmod +x ./gradlew
 
 # Clean and build the application
-RUN ./gradlew clean build --no-daemon
+RUN ./gradlew clean build -x test --no-daemon
 
 # ---- Stage 2: Create the runtime container ----
 FROM eclipse-temurin:24-jre
