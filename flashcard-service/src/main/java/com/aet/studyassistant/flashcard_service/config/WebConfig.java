@@ -7,8 +7,8 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class WebConfig {
-    @Value("${FRONTEND_ORIGIN}")
+public class WebConfig {    
+    @Value("${frontend.origin}")
     private String frontendOrigin;
 
     @Bean
@@ -19,6 +19,7 @@ public class WebConfig {
                 registry.addMapping("/**")
                         .allowedOrigins(frontendOrigin)
                         .allowedMethods("*")
+                        .allowCredentials(true)
                         .allowedHeaders("*");
             }
         };
