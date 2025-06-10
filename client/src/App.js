@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 
 function App() {
+  // read from build-time env vars
+  const AUTH_HOST = process.env.REACT_APP_AUTH_HOST;
+  const QUIZ_HOST = process.env.REACT_APP_QUIZ_HOST;
+  const FLASHCARD_HOST = process.env.REACT_APP_FLASHCARD_HOST;
+
   const [authMessage, setAuthMessage] = useState("");
   const [quizMessage, setQuizMessage] = useState("");
   const [flashcardMessage, setFlashcardMessage] = useState("");
@@ -8,30 +13,30 @@ function App() {
   const [selectedChapterId, setSelectedChapterId] = useState(null);
 
   useEffect(() => {
-    fetch("http://localhost:8081/api/quiz/test")
+    fetch(`https://${QUIZ_HOST}/api/quiz/test`)
       .then((res) => res.text())
       .then(setQuizMessage)
-      .catch((err) => console.error("Error fetching from quiz service:", err));
+      .catch((err) =>
+        console.error("Error fetching from quiz service:", err)
+      );
 
-    fetch("http://localhost:8082/api/flashcard/test")
+    fetch(`https://${FLASHCARD_HOST}/api/flashcard/test`)
       .then((res) => res.text())
       .then(setFlashcardMessage)
       .catch((err) =>
         console.error("Error fetching from flashcard service:", err)
       );
 
-    fetch("http://localhost:8083/api/auth/test")
+    fetch(`https://${AUTH_HOST}/api/auth/test`)
       .then((res) => res.text())
       .then(setAuthMessage)
       .catch((err) => console.error("Error fetching from auth service:", err));
 
-    fetch("http://localhost:8081/api/quiz/chapters")
+    fetch(`https://${QUIZ_HOST}/api/quiz/chapters`)
       .then((res) => res.json())
-      .then((data) => {
-        setChapters(data); // Use backend fields directly: id, name, quizzes
-      })
+      .then(setChapters)
       .catch((err) => console.error("Error fetching chapters:", err));
-  }, []);
+  }, [AUTH_HOST, QUIZ_HOST, FLASHCARD_HOST]);
 
   const handleChapterSelect = (chapterId) => {
     setSelectedChapterId(chapterId);
