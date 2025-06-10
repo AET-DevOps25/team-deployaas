@@ -50,7 +50,7 @@ services:
       - traefik
 
   auth-service:
-    image: ghcr.io/yuyangc-gh/team-deployaas/auth-service:latest
+    image: ghcr.io/aet-devops25/team-deployaas/auth-service:latest
     container_name: studyapp_auth_service
     env_file:
       - .env.prod
@@ -72,7 +72,7 @@ services:
       - traefik
 
   quiz-service:
-    image: ghcr.io/yuyangc-gh/team-deployaas/quiz-service:latest
+    image: ghcr.io/aet-devops25/team-deployaas/quiz-service:latest
     container_name: studyapp_quiz_service
     env_file:
       - .env.prod
@@ -94,7 +94,7 @@ services:
       - traefik
 
   flashcard-service:
-    image: ghcr.io/yuyangc-gh/team-deployaas/flashcard-service:latest
+    image: ghcr.io/aet-devops25/team-deployaas/flashcard-service:latest
     container_name: studyapp_flashcard_service
     env_file:
       - .env.prod
@@ -116,7 +116,7 @@ services:
       - traefik
 
   client:
-    image: ghcr.io/yuyangc-gh/team-deployaas/client:latest
+    image: ghcr.io/aet-devops25/team-deployaas/client:latest
     container_name: studyapp_client
     env_file:
       - .env.prod
