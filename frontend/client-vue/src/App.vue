@@ -1,9 +1,9 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
+import LandingPage from './components/LandingPage.vue'
 </script>
 
 <template>
   <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-    <HelloWorld msg="Vite + Vue" />
+    <LandingPage />
   </div>
 </template>
