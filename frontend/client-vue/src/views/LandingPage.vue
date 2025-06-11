@@ -19,22 +19,22 @@
     <!-- Hero -->
     <section class="hero flex-1 bg-base-200">
       + <div class="hero-content flex-col text-center mx-auto max-w-3xl py-24">
-        <h1 class="text-5xl font-extrabold leading-tight">
-          Master Technology with
-          <span class="text-primary">AI-Powered Learning</span>
-        </h1>
-        <p class="mt-4 text-lg text-base-content/70">
-          Practice open-ended questions across multiple technology courses, receive intelligent feedback, and export to Anki for spaced repetition learning.
-        </p>
-        <div class="mt-8 flex justify-center gap-4">
-          <RouterLink to="/courses" class="btn btn-primary btn-lg">
-            Explore Courses
-          </RouterLink>
-          <RouterLink to="/progress" class="btn btn-outline btn-lg">
-            View Progress
-          </RouterLink>
-        </div>
+      <h1 class="text-5xl font-extrabold leading-tight">
+        Master Technology with
+        <span class="text-primary">AI-Powered Learning</span>
+      </h1>
+      <p class="mt-4 text-lg text-base-content/70">
+        Practice open-ended questions across multiple technology courses, receive intelligent feedback, and export to Anki for spaced repetition learning.
+      </p>
+      <div class="mt-8 flex justify-center gap-4">
+        <RouterLink to="/courses" class="btn btn-primary btn-lg">
+          Explore Courses
+        </RouterLink>
+        <RouterLink to="/progress" class="btn btn-outline btn-lg">
+          View Progress
+        </RouterLink>
       </div>
+    </div>
     </section>
 
     <!-- Why Choose Our Platform? -->

@@ -1,35 +1,32 @@
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 
-// chapters
-import Chapters       from '../views/chapters/Index.vue'
-import ChapterPage    from '../views/chapters/_id/Index.vue'
-import ChapterResults from '../views/chapters/_id/Results.vue'
+// Landing page
+import LandingPage from '../views/LandingPage.vue'
 
-// courses
+// Courses
 import Courses           from '../views/courses/Index.vue'
 import CoursePage        from '../views/courses/_courseId/Index.vue'
 import CourseChapters    from '../views/courses/_courseId/chapters/Index.vue'
 import CourseChapterPage from '../views/courses/_courseId/chapters/_chapterId.vue'
 
-// flashcards
+// Chapters
+import Chapters       from '../views/chapters/Index.vue'
+import ChapterPage    from '../views/chapters/_id/Index.vue'
+import ChapterResults from '../views/chapters/_id/Results.vue'
+
+// Flashcards
 import Flashcards from '../views/flashcards/Index.vue'
 import Generated  from '../views/flashcards/generated/Index.vue'
 import Loading    from '../views/flashcards/generated/Loading.vue'
 
-// progress & quizzes
+// Progress & Quizzes
 import Progress from '../views/progress/Index.vue'
 import Quizzes  from '../views/quizzes/Index.vue'
 
 const routes = [
-  // chapters
-  { path: '/chapters', component: Chapters },
-  {
-    path: '/chapters/:id',
-    component: ChapterPage,
-    children: [
-      { path: 'results', component: ChapterResults }
-    ]
-  },
+  // landing
+  { path: '/', component: LandingPage },
 
   // courses
   { path: '/courses', component: Courses },
@@ -47,6 +44,16 @@ const routes = [
     ]
   },
 
+  // chapters
+  { path: '/chapters', component: Chapters },
+  {
+    path: '/chapters/:id',
+    component: ChapterPage,
+    children: [
+      { path: 'results', component: ChapterResults }
+    ]
+  },
+
   // flashcards
   {
     path: '/flashcards',
@@ -61,12 +68,11 @@ const routes = [
   { path: '/progress', component: Progress },
   { path: '/quizzes', component: Quizzes },
 
-  // catch-all redirect
-  { path: '/', redirect: '/courses' }
+  // fallback
+  { path: '/:pathMatch(.*)*', redirect: '/' }
 ]
 
 export default createRouter({
   history: createWebHistory(),
   routes
 })
-
