@@ -1,0 +1,99 @@
+---
+- name: Bootstrapping Python 3.8 (raw install, no Python required)
+  hosts: all
+  become: yes
+  tasks:
+    - name: Enable Python 3.8 via amazon-linux-extras
+      command: amazon-linux-extras enable python3.8
+
+    - name: Install Python 3.8 via yum
+      ansible.builtin.shell: |
+        amazon-linux-extras enable python3.8
+        yum clean metadata
+        yum install -y python3.8
+      become: yes
+
+    - name: Set Python 3.8 as Ansible interpreter
+      set_fact:
+        ansible_python_interpreter: /usr/bin/python3.8
+
+- name: Wait for SSH connection
+  hosts: all
+  vars:
+    ansible_connection: local
+    ansible_python_interpreter: /usr/bin/python3.8
+  tasks:
+    - name: Ensure SSH port is open
+      wait_for:
+        port: 22
+        delay: 10
+        timeout: 100
+        host: '{{ (ansible_ssh_host | default(ansible_host)) | default(inventory_hostname) }}'
+        search_regex: OpenSSH
+
+- name: Install Docker and Docker Compose
+  hosts: all
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.8
+  tasks:
+    - name: Install required system packages
+      yum:
+        name:
+          - docker
+          - python3-pip
+        update_cache: true
+        state: present
+
+    - name: Install docker-compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/1.27.4/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    - name: Start Docker daemon
+      systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Install Docker Python modules
+      pip:
+        name:
+          - docker
+          - docker-compose
+
+
+- name: Create new Linux user for deployment
+  hosts: all
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.8
+  tasks:
+    - name: Create new user 'deployuser'
+      user:
+        name: deployuser
+        groups: adm,docker
+        append: yes
+
+    - name: Reconnect to server session
+      meta: reset_connection
+
+# ----------------------------------------
+
+- name: Deploy Docker Compose project
+  hosts: all
+  become: yes
+  become_user: deployuser
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.8
+  tasks:
+    - name: Copy docker-compose.yml to remote server
+      copy:
+        src: ./docker-compose.yml
+        dest: /home/deployuser/docker-compose.yml
+
+    - name: Start Docker container with Compose v2
+      community.docker.docker_compose_v2:
+        project_src: /home/deployuser
+        state: present
