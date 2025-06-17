@@ -378,3 +378,7 @@ sketch
 #
 # Recommended template: Node.gitignore/data/
 /data/
+
+*.tfstate
+*.tfstate.backup
+.terraform/
