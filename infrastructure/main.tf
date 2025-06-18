@@ -12,14 +12,14 @@ variable "ssh_key" {}           # path to public key (.pub)
 variable "ssh_private_key" {}   # path to private key (.pem)
 variable "my_ip" {}
 
-# ======== Get latest Amazon Linux 2 AMI ========
+# ======== Get latest Amazon Linux 2023 AMI ========
 data "aws_ami" "amazon-linux-image" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["al2023-ami-*-x86_64"]
   }
 
   filter {
@@ -141,6 +141,17 @@ resource "null_resource" "configure_server" {
 
   provisioner "local-exec" {
     working_dir = "${path.module}/ansible"
-    command     = "ansible-playbook --inventory ${aws_instance.myapp-server.public_ip}, --private-key ${var.ssh_private_key} --user ec2-user playbook.yml"
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<EOT
+      echo "Waiting for SSH to be ready on ${self.triggers.server_ip}..."
+      for i in {1..15}; do
+        ssh -o StrictHostKeyChecking=no -i ${var.ssh_private_key} ec2-user@${self.triggers.server_ip} "echo SSH is up" >/dev/null 2>&1 && break
+        echo "SSH not ready yet... retrying in 10s"
+        sleep 10
+      done
+
+      echo "Running Ansible playbook"
+      ansible-playbook --inventory ${self.triggers.server_ip}, --private-key ${var.ssh_private_key} --user ec2-user playbook.yml
+    EOT
   }
 }
