@@ -59,3 +59,4 @@ jobs:
           echo "Quiz Host: quiz.${{ vars.EC2_PUBLIC_IP }}.nip.io"
           echo "Flashcard Host: flashcard.${{ vars.EC2_PUBLIC_IP }}.nip.io"
           echo "FRONTEND_ORIGIN=https://client.${{ vars.EC2_PUBLIC_IP }}.nip.io"
+
