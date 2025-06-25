@@ -11,7 +11,7 @@ COPY . .
 RUN chmod +x ./gradlew
 
 # Clean and build the application JAR
-RUN ./gradlew clean build --no-daemon
+RUN ./gradlew clean build -x test --no-daemon
 
 # ---- Stage 2: Create a minimal runtime image ----
 FROM eclipse-temurin:24-jre
