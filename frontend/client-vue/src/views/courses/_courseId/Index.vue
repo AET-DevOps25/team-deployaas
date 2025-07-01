@@ -129,9 +129,9 @@ onMounted(async () => {
     // Fetch actual course data from the API
     const courseRes = await fetch(`/api/courses`);
     const allCourses = await courseRes.json();
-    
+
     // Find the specific course by ID
-    const foundCourse = allCourses.find(c => c.id === courseId);
+    const foundCourse = allCourses.find((c) => c.id === courseId);
     if (foundCourse) {
       course.value = foundCourse;
     } else {
@@ -149,7 +149,7 @@ onMounted(async () => {
     const chaptersRes = await fetch(`/api/quiz/courses/${courseId}/chapters`);
     if (chaptersRes.ok) {
       chapters.value = await chaptersRes.json();
-      
+
       // Add question count to each chapter
       for (let chapter of chapters.value) {
         try {
@@ -167,7 +167,7 @@ onMounted(async () => {
         }
       }
     } else {
-      console.error('Failed to fetch chapters for course:', courseId);
+      console.error("Failed to fetch chapters for course:", courseId);
       chapters.value = [];
     }
   } catch (error) {
