@@ -131,6 +131,18 @@
             </div>
           </RouterLink>
 
+          <div
+            class="card bg-base-100 shadow hover:shadow-lg transition opacity-60"
+          >
+            <div class="card-body text-center">
+              <SettingsIcon class="mx-auto w-12 h-12 text-primary mb-2" />
+              <h3 class="text-lg font-semibold">Placeholder Action</h3>
+              <p class="text-sm text-base-content/70">
+                Placeholder to be used for future features
+              </p>
+            </div>
+          </div>
+
           <RouterLink
             to="/flashcards"
             class="card bg-base-100 shadow hover:shadow-lg transition"
@@ -143,27 +155,14 @@
               </p>
             </div>
           </RouterLink>
-
-          <RouterLink
-            to="/quizzes"
-            class="card bg-base-100 shadow hover:shadow-lg transition"
-          >
-            <div class="card-body text-center">
-              <BookOpenIcon class="mx-auto w-12 h-12 text-primary mb-2" />
-              <h3 class="text-lg font-semibold">All Quizzes</h3>
-              <p class="text-sm text-base-content/70">
-                Browse all available quizzes
-              </p>
-            </div>
-          </RouterLink>
         </div>
       </section>
     </div>
 
     <!-- Footer -->
     <footer class="footer bg-base-100 text-base-content py-6">
-      <div class="w-full pl-6">
-        <p>{{ new Date().getFullYear() }} Study Assistant</p>
+      <div class="w-full text-center">
+        <p>© {{ new Date().getFullYear() }} Study Assistant</p>
       </div>
     </footer>
   </div>
@@ -183,6 +182,7 @@ import {
   Smartphone as SmartphoneIcon,
   Globe as GlobeIcon,
   Cpu as CpuIcon,
+  Settings as SettingsIcon,
 } from "lucide-vue-next";
 
 // State
