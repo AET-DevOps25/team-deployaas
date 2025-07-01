@@ -95,8 +95,8 @@
 
     <!-- Footer -->
     <footer class="footer bg-base-100 text-base-content py-6">
-      <div class="w-full text-center">
-        <p>© {{ new Date().getFullYear() }} Study Assistant</p>
+      <div class="w-full pl-6">
+        <p>{{ new Date().getFullYear() }} Study Assistant</p>
       </div>
     </footer>
   </div>

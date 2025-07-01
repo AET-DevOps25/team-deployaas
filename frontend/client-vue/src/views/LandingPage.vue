@@ -16,7 +16,7 @@
 
     <!-- Hero -->
     <section class="hero flex-1 bg-base-200">
-      <div class="hero-content flex-col text-center mx-auto max-w-3xl py-24">
+      <div class="hero-content flex-col text-center mx-auto max-w-3xl py-20">
         <h1 class="text-5xl font-extrabold leading-tight">
           Master Technology with
           <span class="text-primary">AI-Powered Learning</span>
@@ -35,7 +35,7 @@
     </section>
 
     <!-- Why Choose Our Platform? -->
-    <section class="bg-base-200 py-16">
+    <section class="bg-base-200 pb-16">
       <div class="container mx-auto text-center">
         <h2 class="text-3xl font-semibold mb-4">Why Choose Our Platform?</h2>
         <p class="text-base-content/70 mb-10">
@@ -46,7 +46,9 @@
           <div class="card bg-base-100 shadow hover:shadow-lg transition">
             <div class="card-body text-center">
               <BrainIcon class="mx-auto w-12 h-12 text-primary" />
-              <h3 class="card-title mt-2">AI-Powered Feedback</h3>
+              <h3 class="card-title mt-2 justify-center">
+                AI-Powered Feedback
+              </h3>
               <p class="text-base-content/70">
                 Get intelligent, personalized feedback on your answers using
                 advanced semantic analysis.
@@ -56,7 +58,7 @@
           <div class="card bg-base-100 shadow hover:shadow-lg transition">
             <div class="card-body text-center">
               <TargetIcon class="mx-auto w-12 h-12 text-primary" />
-              <h3 class="card-title mt-2">Multiple Courses</h3>
+              <h3 class="card-title mt-2 justify-center">Multiple Courses</h3>
               <p class="text-base-content/70">
                 Choose from DevOps, Software Engineering, Data Science,
                 Cybersecurity, and more.
@@ -66,7 +68,7 @@
           <div class="card bg-base-100 shadow hover:shadow-lg transition">
             <div class="card-body text-center">
               <DownloadIcon class="mx-auto w-12 h-12 text-primary" />
-              <h3 class="card-title mt-2">Anki Integration</h3>
+              <h3 class="card-title mt-2 justify-center">Anki Integration</h3>
               <p class="text-base-content/70">
                 Export your quizzes as Anki flashcards for spaced repetition and
                 long-term retention.
@@ -79,8 +81,8 @@
 
     <!-- Footer -->
     <footer class="footer bg-base-100 text-base-content py-6">
-      <div class="w-full text-center">
-        <p>© {{ new Date().getFullYear() }} Study Assistant</p>
+      <div class="w-full pl-6">
+        <p>{{ new Date().getFullYear() }} Study Assistant</p>
       </div>
     </footer>
   </div>
