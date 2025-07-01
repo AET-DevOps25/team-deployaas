@@ -103,6 +103,10 @@ public class QuizController {
     private String getDescriptionForCourse(String title) {
         if (title.contains("DevOps")) {
             return "Master DevOps practices including CI/CD, Infrastructure as Code, and Monitoring & Observability";
+        } else if (title.contains("Placeholder Course 1")) {
+            return "Comprehensive testing fundamentals and best practices for software quality assurance";
+        } else if (title.contains("Placeholder Course 2")) {
+            return "Advanced course covering sophisticated concepts and real-world applications";
         }
         return "Comprehensive technology course with hands-on practice";
     }
@@ -110,6 +114,10 @@ public class QuizController {
     private String getDifficultyForCourse(String title) {
         if (title.contains("DevOps")) {
             return "Intermediate";
+        } else if (title.contains("Placeholder Course 1")) {
+            return "Beginner";
+        } else if (title.contains("Placeholder Course 2")) {
+            return "Advanced";
         }
         return "Beginner";
     }
@@ -117,6 +125,10 @@ public class QuizController {
     private String getEstimatedTimeForCourse(String title) {
         if (title.contains("DevOps")) {
             return "8-12 hours";
+        } else if (title.contains("Placeholder Course 1")) {
+            return "4-6 hours";
+        } else if (title.contains("Placeholder Course 2")) {
+            return "6-8 hours";
         }
         return "4-6 hours";
     }
@@ -124,6 +136,10 @@ public class QuizController {
     private String getIconKeyForCourse(String title) {
         if (title.contains("DevOps")) {
             return "cloud";
+        } else if (title.contains("Placeholder Course 1")) {
+            return "brain";
+        } else if (title.contains("Placeholder Course 2")) {
+            return "cpu";
         }
         return "code";
     }
@@ -131,6 +147,10 @@ public class QuizController {
     private List<String> getTagsForCourse(String title) {
         if (title.contains("DevOps")) {
             return Arrays.asList("CI/CD", "Infrastructure", "Monitoring", "Automation");
+        } else if (title.contains("Placeholder Course 1")) {
+            return Arrays.asList("Testing", "Quality Assurance", "Fundamentals");
+        } else if (title.contains("Placeholder Course 2")) {
+            return Arrays.asList("Advanced", "Methodologies", "Best Practices");
         }
         return Arrays.asList("Technology", "Programming");
     }

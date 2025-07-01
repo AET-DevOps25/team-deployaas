@@ -126,35 +126,49 @@ onMounted(async () => {
   const courseId = route.params.courseId;
 
   try {
-    // For now, we'll hardcode DevOps course info since we only have DevOps data
-    course.value = {
-      id: courseId,
-      title: "DevOps Engineering",
-      description:
-        "Master DevOps practices including CI/CD, Infrastructure as Code, and Monitoring",
-      difficulty: "Intermediate",
-      estimatedTime: "8-12 hours",
-    };
+    // Fetch actual course data from the API
+    const courseRes = await fetch(`/api/courses`);
+    const allCourses = await courseRes.json();
+    
+    // Find the specific course by ID
+    const foundCourse = allCourses.find(c => c.id === courseId);
+    if (foundCourse) {
+      course.value = foundCourse;
+    } else {
+      console.error(`Course with ID ${courseId} not found`);
+      course.value = {
+        id: courseId,
+        title: "Course Not Found",
+        description: "The requested course could not be found.",
+        difficulty: "Unknown",
+        estimatedTime: "N/A",
+      };
+    }
 
-    // Fetch chapters for the course
-    const chaptersRes = await fetch(`http://localhost:8081/api/quiz/chapters`);
-    chapters.value = await chaptersRes.json();
-
-    // Add question count to each chapter
-    for (let chapter of chapters.value) {
-      try {
-        const questionsRes = await fetch(
-          `http://localhost:8081/api/quiz/chapters/${chapter.id}/questions`
-        );
-        const questions = await questionsRes.json();
-        chapter.questionCount = questions.length;
-      } catch (error) {
-        console.error(
-          `Error fetching questions for chapter ${chapter.id}:`,
-          error
-        );
-        chapter.questionCount = 0;
+    // Fetch chapters for the specific course
+    const chaptersRes = await fetch(`/api/quiz/courses/${courseId}/chapters`);
+    if (chaptersRes.ok) {
+      chapters.value = await chaptersRes.json();
+      
+      // Add question count to each chapter
+      for (let chapter of chapters.value) {
+        try {
+          const questionsRes = await fetch(
+            `/api/quiz/chapters/${chapter.id}/questions`
+          );
+          const questions = await questionsRes.json();
+          chapter.questionCount = questions.length;
+        } catch (error) {
+          console.error(
+            `Error fetching questions for chapter ${chapter.id}:`,
+            error
+          );
+          chapter.questionCount = 0;
+        }
       }
+    } else {
+      console.error('Failed to fetch chapters for course:', courseId);
+      chapters.value = [];
     }
   } catch (error) {
     console.error("Error fetching course data:", error);

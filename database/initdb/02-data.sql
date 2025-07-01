@@ -1,12 +1,46 @@
--- Insert initial DevOps course data
+-- Insert initial course data
 INSERT INTO courses (course_id, title) VALUES 
-    ('550e8400-e29b-41d4-a716-446655440000', 'DevOps Fundamentals');
+    ('550e8400-e29b-41d4-a716-446655440000', 'DevOps Fundamentals'),
+    ('550e8400-e29b-41d4-a716-446655441000', 'Placeholder Course 1'),
+    ('550e8400-e29b-41d4-a716-446655442000', 'Placeholder Course 2');
 
--- Insert three DevOps chapters
+-- Insert DevOps chapters
 INSERT INTO chapters (chapter_id, name, course_id) VALUES 
     ('550e8400-e29b-41d4-a716-446655440001', 'CI/CD Pipelines', '550e8400-e29b-41d4-a716-446655440000'),
     ('550e8400-e29b-41d4-a716-446655440002', 'Infrastructure as Code', '550e8400-e29b-41d4-a716-446655440000'),
     ('550e8400-e29b-41d4-a716-446655440003', 'Monitoring and Observability', '550e8400-e29b-41d4-a716-446655440000');
+
+-- Insert Placeholder Course 1 chapters
+INSERT INTO chapters (chapter_id, name, course_id) VALUES 
+    ('550e8400-e29b-41d4-a716-446655441001', 'Placeholder Chapter 1A', '550e8400-e29b-41d4-a716-446655441000'),
+    ('550e8400-e29b-41d4-a716-446655441002', 'Placeholder Chapter 1B', '550e8400-e29b-41d4-a716-446655441000');
+
+-- Insert Placeholder Course 2 chapters
+INSERT INTO chapters (chapter_id, name, course_id) VALUES 
+    ('550e8400-e29b-41d4-a716-446655442001', 'Placeholder Chapter 2A', '550e8400-e29b-41d4-a716-446655442000'),
+    ('550e8400-e29b-41d4-a716-446655442002', 'Placeholder Chapter 2B', '550e8400-e29b-41d4-a716-446655442000');
+
+-- Insert sample questions for Placeholder Course 1
+INSERT INTO questions (question_id, text, sample_solution, chapter_id, ordering) VALUES 
+    ('550e8400-e29b-41d4-a716-446655441011', 
+     'What are the fundamental principles of software testing?',
+     'The fundamental principles of software testing include: 1) Testing shows the presence of defects, not their absence, 2) Exhaustive testing is impossible, 3) Early testing saves time and money, 4) Defects cluster together, 5) Testing is context-dependent, 6) The pesticide paradox - tests need to be updated regularly, and 7) Absence-of-errors fallacy - finding defects does not guarantee system usability.',
+     '550e8400-e29b-41d4-a716-446655441001', 1),
+    ('550e8400-e29b-41d4-a716-446655441012',
+     'Explain the difference between verification and validation in testing.',
+     'Verification is the process of checking whether the product is being built correctly according to specifications (Are we building the product right?). Validation is the process of checking whether the correct product is being built according to user requirements (Are we building the right product?). Verification typically involves static testing methods like reviews and inspections, while validation involves dynamic testing by executing the code.',
+     '550e8400-e29b-41d4-a716-446655441002', 1);
+
+-- Insert sample questions for Placeholder Course 2  
+INSERT INTO questions (question_id, text, sample_solution, chapter_id, ordering) VALUES 
+    ('550e8400-e29b-41d4-a716-446655442011', 
+     'Describe advanced testing strategies for complex systems.',
+     'Advanced testing strategies for complex systems include: 1) Risk-based testing to prioritize test efforts, 2) Model-based testing using formal models, 3) Property-based testing with automated test case generation, 4) Mutation testing to evaluate test suite quality, 5) Exploratory testing for discovering unexpected behaviors, 6) Performance testing under realistic loads, and 7) Security testing to identify vulnerabilities.',
+     '550e8400-e29b-41d4-a716-446655442001', 1),
+    ('550e8400-e29b-41d4-a716-446655442012',
+     'How do you implement continuous testing in modern development workflows?',
+     'Continuous testing in modern development workflows involves: 1) Integrating automated tests into CI/CD pipelines, 2) Implementing multiple test layers (unit, integration, system, acceptance), 3) Using test automation frameworks and tools, 4) Parallel test execution for faster feedback, 5) Test data management and environment provisioning, 6) Real-time monitoring and reporting, 7) Shift-left testing practices, and 8) Continuous feedback loops for test improvement.',
+     '550e8400-e29b-41d4-a716-446655442002', 1);
 
 -- Insert questions for Chapter 1: CI/CD Pipelines
 INSERT INTO questions (question_id, text, sample_solution, chapter_id, ordering) VALUES 
