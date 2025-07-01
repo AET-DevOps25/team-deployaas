@@ -166,7 +166,19 @@ const handleFinishQuiz = () => {
 const goBackToCourse = () => {
   // Get course ID from chapter data or default to devops
   const courseId = chapter.value?.courseId || "devops";
-  router.push(`/courses/${courseId}`);
+
+  // Check if we should go back to home instead of courses
+  const cameFromHome =
+    router.options.history.state?.back === "/home" ||
+    document.referrer.includes("/home");
+
+  if (cameFromHome) {
+    // If they came from home, go back to home
+    router.push("/home");
+  } else {
+    // Otherwise go to the course detail page
+    router.push(`/courses/${courseId}`);
+  }
 };
 
 const setCurrentQuestionIndex = (index) => {
