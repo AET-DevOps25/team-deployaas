@@ -6,7 +6,7 @@
         <BookOpenIcon class="w-8 h-8 text-primary" />
         <span class="text-2xl font-bold ml-2">Study Assistant</span>
       </div>
-      <div class="hidden md:flex gap-6">
+      <div class="hidden md:flex gap-6 pr-6">
         <RouterLink to="/home" class="btn btn-ghost">Home</RouterLink>
       </div>
       <div class="flex-none">
