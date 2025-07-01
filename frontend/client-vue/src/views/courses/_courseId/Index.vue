@@ -11,13 +11,13 @@
       <div v-else>
         <!-- Header -->
         <div class="mb-8">
-          <RouterLink
-            to="/courses"
+          <button
+            @click="goBack"
             class="btn btn-ghost flex items-center gap-2 mb-4"
           >
             <ArrowLeftIcon class="w-5 h-5" />
-            Back to Courses
-          </RouterLink>
+            {{ backButtonText }}
+          </button>
 
           <div class="text-center">
             <h1 class="text-4xl font-bold mb-4">{{ course.title }}</h1>
@@ -92,7 +92,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter, RouterLink } from "vue-router";
 import {
   ArrowLeft as ArrowLeftIcon,
@@ -107,7 +107,27 @@ const course = ref({});
 const chapters = ref([]);
 const loading = ref(true);
 
+// Computed properties for navigation
+const cameFromHome = computed(() => {
+  // Check if the user came from the homepage
+  return (
+    router.options.history.state?.back === "/home" ||
+    document.referrer.includes("/home")
+  );
+});
+
+const backButtonText = computed(() => {
+  return cameFromHome.value ? "Back to Home" : "Back to Courses";
+});
+
 // Methods
+const goBack = () => {
+  if (cameFromHome.value) {
+    router.push("/home");
+  } else {
+    router.push("/courses");
+  }
+};
 const startChapterQuiz = (chapterId) => {
   router.push(`/quiz/${chapterId}`);
 };
