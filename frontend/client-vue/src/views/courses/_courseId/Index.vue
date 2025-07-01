@@ -1,82 +1,86 @@
 <template>
-  <div class="container mx-auto py-8 max-w-4xl">
-    <!-- Loading state -->
-    <div v-if="loading" class="text-center py-16">
-      <div class="loading loading-spinner loading-lg"></div>
-      <h2 class="text-xl mt-4">Loading course...</h2>
-    </div>
-
-    <!-- Course content -->
-    <div v-else>
-      <!-- Header -->
-      <div class="mb-8">
-        <RouterLink
-          to="/courses"
-          class="btn btn-ghost flex items-center gap-2 mb-4"
-        >
-          <ArrowLeftIcon class="w-5 h-5" />
-          Back to Courses
-        </RouterLink>
-
-        <div class="text-center">
-          <h1 class="text-4xl font-bold mb-4">{{ course.title }}</h1>
-          <p class="text-lg text-base-content/70 mb-4">
-            {{ course.description }}
-          </p>
-          <div class="flex justify-center gap-4 mb-6">
-            <span class="badge badge-outline"
-              >{{ chapters.length }} chapters</span
-            >
-            <span class="badge badge-outline">{{ course.estimatedTime }}</span>
-            <span :class="difficultyBadge(course.difficulty)">{{
-              course.difficulty
-            }}</span>
-          </div>
-        </div>
+  <div data-theme="lofi" class="min-h-screen bg-white">
+    <div class="container mx-auto py-8 max-w-4xl">
+      <!-- Loading state -->
+      <div v-if="loading" class="text-center py-16">
+        <div class="loading loading-spinner loading-lg"></div>
+        <h2 class="text-xl mt-4">Loading course...</h2>
       </div>
 
-      <!-- Chapters list -->
-      <div class="space-y-4">
-        <h2 class="text-2xl font-semibold mb-6">Course Chapters</h2>
+      <!-- Course content -->
+      <div v-else>
+        <!-- Header -->
+        <div class="mb-8">
+          <RouterLink
+            to="/courses"
+            class="btn btn-ghost flex items-center gap-2 mb-4"
+          >
+            <ArrowLeftIcon class="w-5 h-5" />
+            Back to Courses
+          </RouterLink>
 
-        <div v-if="chapters.length === 0" class="text-center py-8">
-          <p class="text-base-content/70">
-            No chapters available for this course yet.
-          </p>
+          <div class="text-center">
+            <h1 class="text-4xl font-bold mb-4">{{ course.title }}</h1>
+            <p class="text-lg text-base-content/70 mb-4">
+              {{ course.description }}
+            </p>
+            <div class="flex justify-center gap-4 mb-6">
+              <span class="badge badge-outline"
+                >{{ chapters.length }} chapters</span
+              >
+              <span class="badge badge-outline">{{
+                course.estimatedTime
+              }}</span>
+              <span :class="difficultyBadge(course.difficulty)">{{
+                course.difficulty
+              }}</span>
+            </div>
+          </div>
         </div>
 
-        <div v-else class="grid gap-4">
-          <div
-            v-for="(chapter, index) in chapters"
-            :key="chapter.id"
-            class="card bg-base-100 shadow hover:shadow-lg transition cursor-pointer"
-            @click="startChapterQuiz(chapter.id)"
-          >
-            <div class="card-body">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                  <div class="flex-shrink-0">
-                    <div
-                      class="w-12 h-12 bg-primary text-primary-content rounded-full flex items-center justify-center font-bold text-lg"
-                    >
-                      {{ index + 1 }}
+        <!-- Chapters list -->
+        <div class="space-y-4">
+          <h2 class="text-2xl font-semibold mb-6">Course Chapters</h2>
+
+          <div v-if="chapters.length === 0" class="text-center py-8">
+            <p class="text-base-content/70">
+              No chapters available for this course yet.
+            </p>
+          </div>
+
+          <div v-else class="grid gap-4">
+            <div
+              v-for="(chapter, index) in chapters"
+              :key="chapter.id"
+              class="card bg-base-100 shadow hover:shadow-lg transition cursor-pointer"
+              @click="startChapterQuiz(chapter.id)"
+            >
+              <div class="card-body">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <div class="flex-shrink-0">
+                      <div
+                        class="w-12 h-12 bg-purple-700 text-primary-content rounded-full flex items-center justify-center font-bold text-lg"
+                      >
+                        {{ index + 1 }}
+                      </div>
+                    </div>
+                    <div>
+                      <h3 class="text-xl font-semibold">{{ chapter.name }}</h3>
+                      <p class="text-base-content/70 mt-1">
+                        {{
+                          chapter.description ||
+                          "Practice questions for this chapter"
+                        }}
+                      </p>
                     </div>
                   </div>
-                  <div>
-                    <h3 class="text-xl font-semibold">{{ chapter.name }}</h3>
-                    <p class="text-base-content/70 mt-1">
-                      {{
-                        chapter.description ||
-                        "Practice questions for this chapter"
-                      }}
-                    </p>
+                  <div class="flex items-center gap-2">
+                    <span class="badge badge-ghost"
+                      >{{ chapter.questionCount || 0 }} questions</span
+                    >
+                    <ArrowRightIcon class="w-5 h-5 text-base-content/50" />
                   </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="badge badge-ghost"
-                    >{{ chapter.questionCount || 0 }} questions</span
-                  >
-                  <ArrowRightIcon class="w-5 h-5 text-base-content/50" />
                 </div>
               </div>
             </div>
