@@ -27,7 +27,7 @@
           <div class="flex justify-between items-start">
             <component
               :is="iconMap[course.iconKey] || DefaultIcon"
-              class="w-8 h-8 text-primary"
+              class="w-8 h-8 text-purple-600"
             />
             <span :class="difficultyBadge(course.difficulty)">
               {{ course.difficulty }}
@@ -65,9 +65,9 @@
           <div class="mt-6">
             <RouterLink
               :to="`/courses/${course.id}`"
-              class="btn btn-outline btn-block"
+              class="btn bg-black text-white border-black hover:bg-gray-800 btn-block"
             >
-              Start Course
+              Continue Course
             </RouterLink>
           </div>
         </div>
