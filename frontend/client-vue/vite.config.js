@@ -1,11 +1,29 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import tailwindcss from '@tailwindcss/vite'
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
+import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    vue(),
-    tailwindcss()
-  ],
-})
+  plugins: [vue(), tailwindcss()],
+  server: {
+    proxy: {
+      "/api/courses": {
+        target: "http://localhost:8081/api/quiz/courses/detailed",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/courses/, ""),
+      },
+      "/api/quiz": {
+        target: "http://localhost:8081",
+        changeOrigin: true,
+      },
+      "/api/flashcard": {
+        target: "http://localhost:8082",
+        changeOrigin: true,
+      },
+      "/api/auth": {
+        target: "http://localhost:8083",
+        changeOrigin: true,
+      },
+    },
+  },
+});
