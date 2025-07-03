@@ -4,6 +4,9 @@ import { createRouter, createWebHistory } from "vue-router";
 // Landing page
 import LandingPage from "../views/LandingPage.vue";
 
+// Home page (for authenticated users)
+import HomePage from "../views/HomePage.vue";
+
 // Courses
 import Courses from "../views/courses/Index.vue";
 import CoursePage from "../views/courses/_courseId/Index.vue";
@@ -28,6 +31,9 @@ import Quiz from "../views/quiz/Index.vue";
 const routes = [
   // landing
   { path: "/", component: LandingPage },
+
+  // home (for authenticated users)
+  { path: "/home", component: HomePage },
 
   // courses
   { path: "/courses", component: Courses },
