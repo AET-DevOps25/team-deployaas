@@ -34,26 +34,27 @@ public class AuthController {
 
     @GetMapping("/test")
     public String testConnection() {
-        return "Auth Service is connected successfully!";
+        return "Auth Service is connected successfully!\n";
     }
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody AuthRequest request) {
         if (userRepo.findByEmail(request.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().body("Email already in use");
+            return ResponseEntity.badRequest().body("Email already in use\n");
         }
 
         User user = new User();
         user.setEmail(request.getEmail());
-        user.setName("Default Name"); // Or extend DTO to include name
+        user.setName(request.getName()); // extended DTO to include name
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         userRepo.save(user);
 
-        return ResponseEntity.ok("User registered successfully");
+        return ResponseEntity.ok("User registered successfully\n");
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+        System.out.println(">>> Login endpoint hit with email: " + request.getEmail());
         try {
             authManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -69,5 +70,14 @@ public class AuthController {
         } catch (Exception ex) {
             return ResponseEntity.status(500).body("Internal error: " + ex.getMessage());
         }
+    }
+
+    @GetMapping("/test-token")
+    public String getTokenForTesting() {
+        System.out.println("==> /test-token endpoint hit");
+        UserDetails user = userDetailsService.loadUserByUsername("test@example.com");
+        String token = jwtUtil.generateToken(user);
+        System.out.println("Generated token: " + token);
+        return token;
     }
 }
