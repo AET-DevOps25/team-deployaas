@@ -8,7 +8,7 @@ user responses to sample solutions using both cloud-based and local LLMs.
 Features:
 - Semantic similarity analysis
 - AI-powered feedback generation
-- Support for OpenAI API and local models (GPT4All)
+- Support for OpenAI API and lightweight local models
 - RESTful API for integration with quiz service
 """
 
@@ -22,6 +22,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from datetime import datetime
 from feedback_analyzer import AdvancedFeedbackAnalyzer
+from lightweight_ai import LightweightAI
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -60,7 +61,7 @@ class FeedbackResponse(BaseModel):
 
 # Global variables for models
 openai_client = None
-local_model = None
+lightweight_ai = None  # Replaced local_model with lightweight_ai
 feedback_analyzer = None
 
 @app.on_event("startup")
@@ -70,8 +71,8 @@ async def startup_event():
     await initialize_models()
 
 async def initialize_models():
-    """Initialize both OpenAI and local models"""
-    global openai_client, local_model, feedback_analyzer
+    """Initialize both OpenAI and lightweight local models"""
+    global openai_client, lightweight_ai, feedback_analyzer
     
     # Initialize advanced feedback analyzer
     feedback_analyzer = AdvancedFeedbackAnalyzer()
@@ -88,15 +89,17 @@ async def initialize_models():
     else:
         logger.warning("OPENAI_API_KEY not found, OpenAI features will be disabled")
     
-    # Initialize local model (GPT4All)
+    # Initialize lightweight AI model (replaces GPT4All)
     try:
-        from gpt4all import GPT4All
-        # For GPT4All 0.1.7 - use simpler model loading
-        local_model = GPT4All("orca-mini-7b.q4_0.bin")
-        logger.info("Local GPT4All model initialized successfully")
+        lightweight_ai = LightweightAI()
+        if lightweight_ai.initialize():
+            logger.info("Lightweight AI model initialized successfully")
+        else:
+            logger.warning("Failed to initialize lightweight AI model")
+            lightweight_ai = None
     except Exception as e:
-        logger.warning(f"Failed to initialize local model: {e}")
-        local_model = None
+        logger.warning(f"Failed to initialize lightweight AI: {e}")
+        lightweight_ai = None
 
 @app.get("/")
 async def root():
@@ -106,7 +109,7 @@ async def root():
         "status": "running",
         "version": "1.0.0",
         "openai_available": openai_client is not None,
-        "local_model_available": local_model is not None
+        "local_model_available": lightweight_ai is not None and lightweight_ai.is_available() if lightweight_ai else False
     }
 
 @app.get("/health")
@@ -117,7 +120,7 @@ async def health_check():
         "timestamp": datetime.now().isoformat(),
         "models": {
             "openai": openai_client is not None,
-            "local": local_model is not None
+            "local": lightweight_ai is not None and lightweight_ai.is_available() if lightweight_ai else False
         }
     }
 
@@ -131,8 +134,8 @@ async def generate_feedback(request: FeedbackRequest):
         
         if request.model_type == "openai" and openai_client:
             return await generate_openai_feedback(request)
-        elif request.model_type == "local" and local_model:
-            return await generate_local_feedback(request)
+        elif request.model_type == "local" and lightweight_ai and lightweight_ai.is_available():
+            return await generate_lightweight_feedback(request)
         else:
             # Fallback to advanced analyzer
             return await generate_analyzer_feedback(request)
@@ -193,34 +196,28 @@ async def generate_openai_feedback(request: FeedbackRequest) -> FeedbackResponse
         logger.error(f"OpenAI API error: {e}")
         raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
 
-async def generate_local_feedback(request: FeedbackRequest) -> FeedbackResponse:
-    """Generate feedback using local GPT4All model"""
-    
-    prompt = create_feedback_prompt(
-        request.question_text, 
-        request.user_answer, 
-        request.sample_solution
-    )
+async def generate_lightweight_feedback(request: FeedbackRequest) -> FeedbackResponse:
+    """Generate feedback using lightweight AI model"""
     
     try:
-        # For GPT4All 0.1.7 - use simple generate method
-        response = local_model.generate(prompt, max_tokens=800)
-        
-        score, feedback, suggestions, strengths, weaknesses = parse_feedback_response(response)
+        result = lightweight_ai.generate_feedback(
+            request.user_answer,
+            request.sample_solution
+        )
         
         return FeedbackResponse(
-            score=score,
-            feedback=feedback,
-            suggestions=suggestions,
-            strengths=strengths,
-            weaknesses=weaknesses,
-            model_used="local-gpt4all",
+            score=result["score"],
+            feedback=result["feedback"],
+            suggestions=result["suggestions"],
+            strengths=result["strengths"],
+            weaknesses=result["weaknesses"],
+            model_used="lightweight-ai",
             timestamp=datetime.now().isoformat()
         )
         
     except Exception as e:
-        logger.error(f"Local model error: {e}")
-        raise HTTPException(status_code=500, detail=f"Local model error: {str(e)}")
+        logger.error(f"Lightweight AI error: {e}")
+        raise HTTPException(status_code=500, detail=f"Lightweight AI error: {str(e)}")
 
 async def generate_analyzer_feedback(request: FeedbackRequest) -> FeedbackResponse:
     """Generate feedback using the advanced analyzer"""
@@ -332,13 +329,40 @@ async def get_available_models():
             },
             "local": {
                 "available": local_model is not None,
-                "description": "Local GPT4All model for privacy-focused feedback"
+                "description": "Lightweight local AI model for fast, privacy-focused feedback"
             },
             "advanced": {
                 "available": feedback_analyzer is not None,
                 "description": "Advanced semantic similarity analyzer"
             }
         }
+    }
+
+@app.get("/api/models")
+async def get_available_models():
+    """Get information about available AI models"""
+    return {
+        "models": {
+            "openai": {
+                "available": openai_client is not None,
+                "description": "OpenAI GPT-3.5-turbo model for high-quality feedback",
+                "size": "Cloud-based",
+                "speed": "2-5 seconds"
+            },
+            "local": {
+                "available": lightweight_ai is not None and lightweight_ai.is_available() if lightweight_ai else False,
+                "description": "Lightweight local AI with T5 and sentence transformers",
+                "size": "~350MB",
+                "speed": "1-2 seconds"
+            },
+            "advanced": {
+                "available": feedback_analyzer is not None,
+                "description": "Advanced semantic similarity analyzer",
+                "size": "~80MB",
+                "speed": "<1 second"
+            }
+        },
+        "default_model": "local" if lightweight_ai and lightweight_ai.is_available() else "advanced"
     }
 
 if __name__ == "__main__":

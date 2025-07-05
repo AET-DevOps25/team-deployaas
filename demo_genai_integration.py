@@ -109,7 +109,7 @@ def demonstrate_genai_workflow():
             "Include discussion of automated testing",
             "Mention frequent integration benefits"
         ],
-        "model_used": "local-gpt4all",
+        "model_used": "lightweight-local-ai",
         "timestamp": datetime.now().isoformat()
     }
     
@@ -135,7 +135,7 @@ def demonstrate_genai_workflow():
            │                     │            ┌─────────────┐
            │                     │            │AI Models    │
            │                     │            │• OpenAI API │
-           │                     │            │• GPT4All    │
+           │                     │            │• LightweightAI │
            │                     │            │• Transformers│
            │                     │            └─────────────┘
            │                     ▼
