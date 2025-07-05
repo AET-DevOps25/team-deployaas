@@ -68,7 +68,8 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
   client:
-    build: ./client
+    build:
+      context: ./client
     container_name: studyapp_client
     restart: always
     ports:
