@@ -89,6 +89,39 @@ resource "aws_security_group" "myapp-sg" {
     cidr_blocks = [var.my_ip]
   }
 
+  # Frontend (React app)
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Quiz Service
+  ingress {
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Flashcard Service  
+  ingress {
+    from_port   = 8082
+    to_port     = 8082
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Auth Service
+  ingress {
+    from_port   = 8083
+    to_port     = 8083
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Database Admin (pgAdmin)
   ingress {
     from_port   = 8080
     to_port     = 8080
@@ -134,24 +167,25 @@ output "server-ip" {
 }
 
 # ======== Ansible Local Exec ========
-resource "null_resource" "configure_server" {
-  triggers = {
-    server_ip = aws_instance.myapp-server.public_ip
-  }
-
-  provisioner "local-exec" {
-    working_dir = "${path.module}/ansible"
-    interpreter = ["/bin/bash", "-c"]
-    command     = <<EOT
-      echo "Waiting for SSH to be ready on ${self.triggers.server_ip}..."
-      for i in {1..15}; do
-        ssh -o StrictHostKeyChecking=no -i ${var.ssh_private_key} ec2-user@${self.triggers.server_ip} "echo SSH is up" >/dev/null 2>&1 && break
-        echo "SSH not ready yet... retrying in 10s"
-        sleep 10
-      done
-
-      echo "Running Ansible playbook"
-      ansible-playbook --inventory ${self.triggers.server_ip}, --private-key ${var.ssh_private_key} --user ec2-user playbook.yml
-    EOT
-  }
-}
+# Temporarily commented out to debug the hanging issue
+# resource "null_resource" "configure_server" {
+#   triggers = {
+#     server_ip = aws_instance.myapp-server.public_ip
+#   }
+#
+#   provisioner "local-exec" {
+#     working_dir = "${path.module}/ansible"
+#     interpreter = ["/bin/bash", "-c"]
+#     command     = <<EOT
+#       echo "Waiting for SSH to be ready on ${self.triggers.server_ip}..."
+#       for i in {1..15}; do
+#         ssh -o StrictHostKeyChecking=no -i ${var.ssh_private_key} ec2-user@${self.triggers.server_ip} "echo SSH is up" >/dev/null 2>&1 && break
+#         echo "SSH not ready yet... retrying in 10s"
+#         sleep 10
+#       done
+#
+#       echo "Running Ansible playbook"
+#       ansible-playbook --inventory ${self.triggers.server_ip}, --private-key ${var.ssh_private_key} --user ec2-user playbook.yml
+#     EOT
+#   }
+# }

@@ -1,0 +1,55 @@
+---
+- name: Install Docker and basic setup
+  hosts: all
+  become: yes
+  gather_facts: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Update system packages
+      yum:
+        name: '*'
+        state: latest
+        update_cache: true
+
+    - name: Install required system packages
+      yum:
+        name:
+          - docker
+          - python3-pip
+          - git
+        state: present
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Install Docker Compose using pip
+      pip:
+        name: docker-compose
+        state: present
+
+    - name: Create deployment user
+      user:
+        name: deployuser
+        groups: docker
+        append: yes
+        create_home: yes
+
+    - name: Test Docker installation
+      command: docker --version
+      register: docker_version
+
+    - name: Display Docker version
+      debug:
+        msg: "Docker version: {{ docker_version.stdout }}"
+
+    - name: Test Docker Compose installation
+      command: docker-compose --version
+      register: compose_version
+
+    - name: Display Docker Compose version
+      debug:
+        msg: "Docker Compose version: {{ compose_version.stdout }}"

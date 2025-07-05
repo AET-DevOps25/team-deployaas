@@ -1,0 +1,113 @@
+---
+- name: Deploy Study Assistant App to EC2
+  hosts: all
+  become: yes
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    deploy_user: ec2-user
+    app_dir: /home/ec2-user/study-assistant
+    # Can be overridden from command line: -e use_ecr=true
+    use_ecr: false
+
+  tasks:
+    - name: Create application directory
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0755'
+
+    - name: Install AWS CLI (if using ECR)
+      yum:
+        name: awscli
+        state: present
+      when: use_ecr | bool
+
+    - name: Copy .env file
+      copy:
+        src: ../../.env
+        dest: "{{ app_dir }}/.env"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0644'
+
+    - name: Copy docker-compose.yml (local development)
+      copy:
+        src: ../../docker-compose.yml
+        dest: "{{ app_dir }}/docker-compose.yml"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0644'
+      when: not (use_ecr | bool)
+
+    - name: Copy production docker-compose.yml (ECR images)
+      copy:
+        src: ../../docker-compose.prod.yml
+        dest: "{{ app_dir }}/docker-compose.yml"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0644'
+      when: use_ecr | bool
+
+    - name: Copy service directories (local development)
+      copy:
+        src: "../../{{ item }}"
+        dest: "{{ app_dir }}/"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0755'
+      loop:
+        - auth-service
+        - quiz-service
+        - flashcard-service
+        - client
+        - database
+      when: not (use_ecr | bool)
+
+    - name: Copy only database directory (ECR deployment)
+      copy:
+        src: "../../database"
+        dest: "{{ app_dir }}/"
+        owner: "{{ deploy_user }}"
+        group: "{{ deploy_user }}"
+        mode: '0755'
+      when: use_ecr | bool
+
+    - name: Stop existing services
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: absent
+      become_user: "{{ deploy_user }}"
+      ignore_errors: yes
+
+    - name: Start Docker Compose services
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_dir }}"
+        state: present
+      become_user: "{{ deploy_user }}"
+
+    - name: Wait for services to be ready
+      wait_for:
+        port: "{{ item }}"
+        host: localhost
+        timeout: 300
+      loop:
+        - 3000  # client
+        - 8081  # quiz-service
+        - 8082  # flashcard-service
+        - 8083  # auth-service
+        - 5432  # database
+
+    - name: Show deployment status
+      debug:
+        msg: |
+          🎉 Study Assistant App deployed successfully!
+          
+          Access your application at:
+          - Frontend: http://{{ ansible_host }}:3000
+          - Quiz Service: http://{{ ansible_host }}:8081
+          - Auth Service: http://{{ ansible_host }}:8083
+          - Flashcard Service: http://{{ ansible_host }}:8082
+          - Database Admin: http://{{ ansible_host }}:8080
