@@ -76,7 +76,7 @@
                   v-if="submittingAnswer"
                   class="loading loading-spinner loading-sm"
                 ></span>
-                {{ submittingAnswer ? "Analyzing..." : "Advanced Analysis" }}
+                {{ submittingAnswer ? "Analyzing..." : "Semantic Analysis" }}
               </button>
             </div>
           </div>
@@ -89,25 +89,6 @@
               <span class="text-purple-700">🤖</span>
               AI Feedback
             </h3>
-
-            <!-- Score -->
-            <div class="mb-4">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="font-medium">Score:</span>
-                <div
-                  class="badge badge-lg"
-                  :class="getScoreBadgeClass(currentFeedback.score)"
-                >
-                  {{ Math.round(currentFeedback.score * 100) }}%
-                </div>
-              </div>
-              <progress
-                class="progress w-full"
-                :class="getScoreProgressClass(currentFeedback.score)"
-                :value="currentFeedback.score * 100"
-                max="100"
-              ></progress>
-            </div>
 
             <!-- Main Feedback -->
             <div class="mb-4">
@@ -373,19 +354,6 @@ const submitAdvancedAnswer = async () => {
   } finally {
     submittingAnswer.value = false;
   }
-};
-
-// Helper functions for feedback display
-const getScoreBadgeClass = (score) => {
-  if (score >= 0.8) return "badge-success";
-  if (score >= 0.6) return "badge-warning";
-  return "badge-error";
-};
-
-const getScoreProgressClass = (score) => {
-  if (score >= 0.8) return "progress-success";
-  if (score >= 0.6) return "progress-warning";
-  return "progress-error";
 };
 
 const formatTimestamp = (timestamp) => {

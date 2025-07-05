@@ -11,7 +11,7 @@ The GenAI (Generative AI) service provides intelligent feedback for quiz answers
 - **Multiple AI Models**: Supports OpenAI API (cloud), Lightweight AI (local), and Advanced Analyzer (fallback)
 - **Fast Local Processing**: Lightweight sentence transformers (~80MB) for sub-second response times
 - **Smart Fallback System**: Automatic fallback between models for maximum reliability
-- **Advanced Analysis**: Detailed semantic analysis with concept coverage tracking
+- **Semantic Analysis**: Detailed semantic analysis with concept coverage tracking
 - **RESTful API**: Easy integration with the quiz service through HTTP endpoints
 - **Containerized Deployment**: Fully containerized microservice with health checks
 
@@ -59,7 +59,6 @@ GenAI Service (FastAPI + Python)
 
 ```json
 {
-  "score": 0.85,
   "feedback": "Good understanding of CI concepts...",
   "suggestions": ["Include discussion of automated testing", "..."],
   "strengths": ["Correct identification of automation", "..."],
@@ -74,7 +73,7 @@ GenAI Service (FastAPI + Python)
 #### Answer Submission
 
 - `POST /api/quiz/questions/{questionId}/submit` - Submit answer for feedback
-- `POST /api/quiz/questions/{questionId}/submit/advanced` - Submit for advanced analysis
+- `POST /api/quiz/questions/{questionId}/submit/advanced` - Submit for semantic analysis
 - `GET /api/quiz/genai/health` - Check GenAI service availability
 
 ## Model Architecture
@@ -95,7 +94,7 @@ The lightweight AI implementation uses optimized sentence transformers for fast,
 1. **Semantic Analysis**: Calculate cosine similarity between embeddings
 2. **Concept Extraction**: Identify key concepts using NLP techniques
 3. **Feedback Generation**: Rule-based feedback with AI-enhanced scoring
-4. **Structured Output**: Consistent format with scores, strengths, weaknesses
+4. **Structured Output**: Consistent format with feedback, strengths, weaknesses, and suggestions
 
 ### Fallback Strategy
 
@@ -127,11 +126,13 @@ Request → OpenAI API (if available & requested)
 The service automatically initializes available models in priority order:
 
 1. **OpenAI Models** (if API key provided):
+
    - GPT-3.5-turbo for high-quality feedback
    - Requires internet connection and API credits
    - Response time: 2-5 seconds
 
 2. **Lightweight AI** (primary local model):
+
    - Sentence transformers with semantic similarity analysis
    - ~80MB model size (vs 3-7GB for traditional models)
    - Response time: 0.5-1 seconds
@@ -182,6 +183,7 @@ genai-service:
    ```
 
 3. **Test integration**:
+
    ```bash
    # Test the GenAI service directly
    curl -X POST http://localhost:8084/api/feedback \
@@ -192,7 +194,7 @@ genai-service:
        "sample_solution": "CI is a development practice...",
        "model_type": "local"
      }'
-   
+
    # Or run the integration test script
    python test_genai_integration.py
    ```
@@ -204,7 +206,6 @@ The Vue.js frontend integrates with the GenAI feedback through the quiz interfac
 1. **Answer Submission**: Users type their answers and click "Submit Answer"
 2. **AI Analysis**: The system sends the answer to the GenAI service
 3. **Feedback Display**: Users see:
-   - Numerical score (0-100%)
    - Overall feedback text
    - Strengths identified
    - Areas for improvement
@@ -213,8 +214,8 @@ The Vue.js frontend integrates with the GenAI feedback through the quiz interfac
 ### Frontend Features
 
 - **Real-time feedback**: Immediate AI analysis after submission
-- **Advanced analysis**: Optional deeper semantic analysis
-- **Visual indicators**: Color-coded scores and progress bars
+- **Semantic analysis**: Optional deeper semantic analysis
+- **Comprehensive feedback**: Detailed feedback with strengths, weaknesses, and suggestions
 - **Model selection**: Choose between OpenAI, local AI, or analyzer
 - **Performance indicators**: Response time and model used displayed
 
@@ -222,12 +223,13 @@ The Vue.js frontend integrates with the GenAI feedback through the quiz interfac
 
 ### Adding New Models
 
-1. **Local Models**: 
+1. **Local Models**:
+
    - Add new model class in `lightweight_ai.py` or create new module
    - Register in `initialize_models()` in `main.py`
    - Add model availability check in health endpoints
 
-2. **Cloud Models**: 
+2. **Cloud Models**:
    - Add API integration in new `generate_*_feedback()` function
    - Update model routing logic in main feedback endpoint
 
@@ -259,6 +261,7 @@ python test_genai_integration.py
    - Verify network connectivity between services
 
 2. **Model Loading Failures**:
+
    - Check available disk space for model downloads (~80MB for sentence transformers)
    - Verify internet connection for initial model download
    - Check logs for specific error messages

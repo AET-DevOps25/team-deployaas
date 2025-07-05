@@ -39,7 +39,7 @@ def test_genai_service():
         
         if response.status_code == 200:
             feedback = response.json()
-            print(f"✅ Feedback Generation: Score {feedback.get('score', 'N/A')}")
+            print(f"✅ Feedback Generation: Success")
             print(f"   Model: {feedback.get('model_used', 'N/A')}")
             print(f"   Feedback: {feedback.get('feedback', 'N/A')[:100]}...")
             return True
@@ -118,7 +118,7 @@ def test_quiz_service_integration():
         
         if submit_response.status_code == 200:
             result = submit_response.json()
-            print(f"✅ Answer Submission: Score {result.get('score', 'N/A')}")
+            print(f"✅ Answer Submission: Success")
             print(f"   Feedback: {result.get('feedback', 'N/A')[:100]}...")
             return True
         else:
@@ -151,7 +151,7 @@ def test_advanced_feedback():
         
         if response.status_code == 200:
             feedback = response.json()
-            print(f"✅ Advanced Feedback: Score {feedback.get('score', 'N/A')}")
+            print(f"✅ Advanced Feedback: Success")
             print(f"   Strengths: {len(feedback.get('strengths', []))} items")
             print(f"   Suggestions: {len(feedback.get('suggestions', []))} items")
             return True

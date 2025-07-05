@@ -207,7 +207,6 @@ class LightweightAI:
             suggestions = ["Review course materials for additional insights"]
         
         return {
-            "score": float(similarity),
             "feedback": feedback,
             "strengths": strengths[:3],  # Limit to 3 items
             "weaknesses": weaknesses[:3],
@@ -219,7 +218,6 @@ class LightweightAI:
     def _fallback_feedback(self) -> Dict:
         """Fallback feedback when AI fails"""
         return {
-            "score": 0.5,
             "feedback": "Your answer has been received. Please compare it with the sample solution to identify areas for improvement.",
             "strengths": ["You provided an answer"],
             "weaknesses": ["AI analysis temporarily unavailable"],
