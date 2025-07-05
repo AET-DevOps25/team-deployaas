@@ -48,7 +48,122 @@
               rows="6"
               class="textarea textarea-bordered w-full"
               placeholder="Type your answer here..."
+              :disabled="submittingAnswer"
             />
+
+            <!-- Submit Answer Button -->
+            <div class="flex gap-2 mt-4">
+              <button
+                @click="submitAnswer"
+                :disabled="!currentAnswer.trim() || submittingAnswer"
+                class="btn bg-purple-700 text-white hover:bg-purple-800"
+              >
+                <span
+                  v-if="submittingAnswer"
+                  class="loading loading-spinner loading-sm"
+                ></span>
+                {{
+                  submittingAnswer ? "Getting AI Feedback..." : "Submit Answer"
+                }}
+              </button>
+
+              <button
+                @click="submitAdvancedAnswer"
+                :disabled="!currentAnswer.trim() || submittingAnswer"
+                class="btn btn-outline btn-secondary"
+              >
+                <span
+                  v-if="submittingAnswer"
+                  class="loading loading-spinner loading-sm"
+                ></span>
+                {{ submittingAnswer ? "Analyzing..." : "Advanced Analysis" }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Feedback Card -->
+        <div v-if="currentFeedback" class="card bg-base-100 shadow-lg mb-8">
+          <div class="card-body">
+            <h3 class="text-xl font-medium mb-4 flex items-center gap-2">
+              <span class="text-purple-700">🤖</span>
+              AI Feedback
+            </h3>
+
+            <!-- Score -->
+            <div class="mb-4">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="font-medium">Score:</span>
+                <div
+                  class="badge badge-lg"
+                  :class="getScoreBadgeClass(currentFeedback.score)"
+                >
+                  {{ Math.round(currentFeedback.score * 100) }}%
+                </div>
+              </div>
+              <progress
+                class="progress w-full"
+                :class="getScoreProgressClass(currentFeedback.score)"
+                :value="currentFeedback.score * 100"
+                max="100"
+              ></progress>
+            </div>
+
+            <!-- Main Feedback -->
+            <div class="mb-4">
+              <h4 class="font-medium mb-2">Overall Feedback:</h4>
+              <p class="text-base-content/80">{{ currentFeedback.feedback }}</p>
+            </div>
+
+            <!-- Strengths -->
+            <div v-if="currentFeedback.strengths?.length" class="mb-4">
+              <h4 class="font-medium mb-2 text-green-600">✅ Strengths:</h4>
+              <ul class="list-disc list-inside space-y-1">
+                <li
+                  v-for="strength in currentFeedback.strengths"
+                  :key="strength"
+                  class="text-base-content/80"
+                >
+                  {{ strength }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Areas for Improvement -->
+            <div v-if="currentFeedback.weaknesses?.length" class="mb-4">
+              <h4 class="font-medium mb-2 text-orange-600">
+                ⚠️ Areas for Improvement:
+              </h4>
+              <ul class="list-disc list-inside space-y-1">
+                <li
+                  v-for="weakness in currentFeedback.weaknesses"
+                  :key="weakness"
+                  class="text-base-content/80"
+                >
+                  {{ weakness }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Suggestions -->
+            <div v-if="currentFeedback.suggestions?.length" class="mb-4">
+              <h4 class="font-medium mb-2 text-blue-600">💡 Suggestions:</h4>
+              <ul class="list-disc list-inside space-y-1">
+                <li
+                  v-for="suggestion in currentFeedback.suggestions"
+                  :key="suggestion"
+                  class="text-base-content/80"
+                >
+                  {{ suggestion }}
+                </li>
+              </ul>
+            </div>
+
+            <!-- Model Used -->
+            <div class="text-xs text-base-content/60 mt-4">
+              Analysis by: {{ currentFeedback.model_used }} |
+              {{ formatTimestamp(currentFeedback.timestamp) }}
+            </div>
           </div>
         </div>
 
@@ -131,7 +246,9 @@ const chapter = ref(null);
 const questions = ref([]);
 const currentQuestionIndex = ref(0);
 const answers = ref({});
+const feedbacks = ref({});
 const loading = ref(true);
+const submittingAnswer = ref(false);
 
 // Computed
 const currentQuestion = computed(
@@ -143,6 +260,10 @@ const currentAnswer = computed({
     answers.value[currentQuestionIndex.value] = value;
   },
 });
+
+const currentFeedback = computed(
+  () => feedbacks.value[currentQuestionIndex.value] || null
+);
 
 // Methods
 const handleNextQuestion = () => {
@@ -183,6 +304,96 @@ const goBackToCourse = () => {
 
 const setCurrentQuestionIndex = (index) => {
   currentQuestionIndex.value = index;
+};
+
+// Submit answer for AI feedback
+const submitAnswer = async () => {
+  if (!currentAnswer.value.trim()) return;
+
+  submittingAnswer.value = true;
+  try {
+    const response = await fetch(
+      `http://localhost:8081/api/quiz/questions/${currentQuestion.value.id}/submit`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          answer: currentAnswer.value,
+          model_type: "local", // or 'openai' based on preference
+        }),
+      }
+    );
+
+    if (response.ok) {
+      const feedback = await response.json();
+      feedbacks.value[currentQuestionIndex.value] = feedback;
+    } else {
+      console.error("Failed to submit answer");
+      alert("Failed to get AI feedback. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error submitting answer:", error);
+    alert("Error connecting to the feedback service. Please try again.");
+  } finally {
+    submittingAnswer.value = false;
+  }
+};
+
+// Submit answer for advanced AI analysis
+const submitAdvancedAnswer = async () => {
+  if (!currentAnswer.value.trim()) return;
+
+  submittingAnswer.value = true;
+  try {
+    const response = await fetch(
+      `http://localhost:8081/api/quiz/questions/${currentQuestion.value.id}/submit/advanced`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          answer: currentAnswer.value,
+        }),
+      }
+    );
+
+    if (response.ok) {
+      const feedback = await response.json();
+      feedbacks.value[currentQuestionIndex.value] = feedback;
+    } else {
+      console.error("Failed to submit answer for advanced analysis");
+      alert("Failed to get advanced AI feedback. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error submitting answer for advanced analysis:", error);
+    alert("Error connecting to the feedback service. Please try again.");
+  } finally {
+    submittingAnswer.value = false;
+  }
+};
+
+// Helper functions for feedback display
+const getScoreBadgeClass = (score) => {
+  if (score >= 0.8) return "badge-success";
+  if (score >= 0.6) return "badge-warning";
+  return "badge-error";
+};
+
+const getScoreProgressClass = (score) => {
+  if (score >= 0.8) return "progress-success";
+  if (score >= 0.6) return "progress-warning";
+  return "progress-error";
+};
+
+const formatTimestamp = (timestamp) => {
+  try {
+    return new Date(timestamp).toLocaleString();
+  } catch {
+    return timestamp;
+  }
 };
 
 // Fetch data on component mount

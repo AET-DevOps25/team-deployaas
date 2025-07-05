@@ -67,6 +67,25 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
+  genai-service:
+    build: ./genai
+    container_name: studyapp_genai_service
+    restart: always
+    ports:
+      - "8084:8084"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - SERVICE_HOST=0.0.0.0
+      - SERVICE_PORT=8084
+      - LOG_LEVEL=INFO
+    volumes:
+      - genai_models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   client:
     build:
       context: ./frontend/client-vue
@@ -78,6 +97,8 @@ services:
       - auth-service
       - quiz-service
       - flashcard-service
+      - genai-service
 
 volumes:
   pgdata:
+  genai_models:
