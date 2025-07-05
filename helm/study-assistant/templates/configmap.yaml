@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+data:
+  DATABASE_URL: "jdbc:postgresql://{{ include "study-assistant.fullname" . }}-postgres:5432/{{ .Values.database.credentials.database }}"
+  SPRING_PROFILES_ACTIVE: {{ .Values.config.environment | quote }}
+  FRONTEND_ORIGIN: {{ .Values.config.frontendOrigin | quote }}
+  SERVER_PORT: "8080"
+  
+  # React App Environment Variables
+  REACT_APP_AUTH_HOST: {{ .Values.config.authServiceUrl | quote }}
+  REACT_APP_QUIZ_HOST: {{ .Values.config.quizServiceUrl | quote }}
+  REACT_APP_FLASHCARD_HOST: {{ .Values.config.flashcardServiceUrl | quote }}
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-secrets
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+type: Opaque
+data:
+  # Base64 encoded values
+  POSTGRES_USER: {{ .Values.database.credentials.username | b64enc | quote }}
+  POSTGRES_PASSWORD: {{ .Values.database.credentials.password | b64enc | quote }}
+  POSTGRES_DB: {{ .Values.database.credentials.database | b64enc | quote }}
+  DATABASE_USERNAME: {{ .Values.database.credentials.username | b64enc | quote }}
+  DATABASE_PASSWORD: {{ .Values.database.credentials.password | b64enc | quote }}
+  JWT_SECRET: {{ "your-jwt-secret-key-here" | b64enc | quote }}
+  PGADMIN_DEFAULT_EMAIL: {{ .Values.pgadmin.credentials.email | b64enc | quote }}
+  PGADMIN_DEFAULT_PASSWORD: {{ .Values.pgadmin.credentials.password | b64enc | quote }}

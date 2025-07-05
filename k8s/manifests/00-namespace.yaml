@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: devops25-team-deployaas
+  labels:
+    name: devops25-team-deployaas
+    team: devops25-team-deployaas

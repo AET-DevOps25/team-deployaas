@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: study-assistant-config
+  namespace: devops25-team-deployaas
+data:
+  DATABASE_URL: "jdbc:postgresql://postgres-service:5432/studyassistant"
+  SPRING_PROFILES_ACTIVE: "k8s"
+  FRONTEND_ORIGIN: "https://study-assistant.devops25-team-deployaas.rancher.ase.cit.tum.de"
+  SERVER_PORT: "8080"
+  
+  # React App Environment Variables
+  REACT_APP_AUTH_HOST: "https://auth.devops25-team-deployaas.rancher.ase.cit.tum.de"
+  REACT_APP_QUIZ_HOST: "https://quiz.devops25-team-deployaas.rancher.ase.cit.tum.de"
+  REACT_APP_FLASHCARD_HOST: "https://flashcard.devops25-team-deployaas.rancher.ase.cit.tum.de"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: study-assistant-secrets
+  namespace: devops25-team-deployaas
+type: Opaque
+data:
+  # Base64 encoded values (you'll need to update these)
+  POSTGRES_USER: cG9zdGdyZXM=  # postgres
+  POSTGRES_PASSWORD: aW5pdGV4YW1wbGU=  # initexample
+  POSTGRES_DB: aW5pdGV4YW1wbGU=  # initexample
+  DATABASE_USERNAME: cG9zdGdyZXM=  # postgres
+  DATABASE_PASSWORD: aW5pdGV4YW1wbGU=  # initexample
+  JWT_SECRET: eW91ci1qd3Qtc2VjcmV0LWtleS1oZXJl  # your-jwt-secret-key-here
+  PGADMIN_DEFAULT_EMAIL: YWRtaW5AeW91LmNvbQ==  # admin@you.com
+  PGADMIN_DEFAULT_PASSWORD: QWRtaW5QYXNzMTIzIQ==  # AdminPass123!

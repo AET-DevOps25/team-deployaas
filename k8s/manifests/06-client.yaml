@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: devops25-team-deployaas
+  labels:
+    app: client
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      automountServiceAccountToken: false
+      containers:
+      - name: client
+        image: ghcr.io/aet-devops25/team-deployaas/client:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: REACT_APP_AUTH_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: study-assistant-config
+              key: REACT_APP_AUTH_HOST
+        - name: REACT_APP_QUIZ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: study-assistant-config
+              key: REACT_APP_QUIZ_HOST
+        - name: REACT_APP_FLASHCARD_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: study-assistant-config
+              key: REACT_APP_FLASHCARD_HOST
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+            ephemeral-storage: "512Mi"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+            ephemeral-storage: "1Gi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client-service
+  namespace: devops25-team-deployaas
+  labels:
+    app: client
+spec:
+  selector:
+    app: client
+  ports:
+  - port: 3000
+    targetPort: 3000
+  type: ClusterIP

@@ -1,0 +1,71 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: study-assistant-ingress
+  namespace: devops25-team-deployaas
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  tls:
+  - hosts:
+    - study-assistant.devops25-team-deployaas.rancher.ase.cit.tum.de
+    - auth.devops25-team-deployaas.rancher.ase.cit.tum.de
+    - quiz.devops25-team-deployaas.rancher.ase.cit.tum.de
+    - flashcard.devops25-team-deployaas.rancher.ase.cit.tum.de
+    secretName: study-assistant-tls
+  rules:
+  # Frontend
+  - host: study-assistant.devops25-team-deployaas.rancher.ase.cit.tum.de
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: client-service
+            port:
+              number: 3000
+  
+  # Auth Service
+  - host: auth.devops25-team-deployaas.rancher.ase.cit.tum.de
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port:
+              number: 8083
+  
+  # Quiz Service
+  - host: quiz.devops25-team-deployaas.rancher.ase.cit.tum.de
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: quiz-service
+            port:
+              number: 8081
+  
+  # Flashcard Service
+  - host: flashcard.devops25-team-deployaas.rancher.ase.cit.tum.de
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: flashcard-service
+            port:
+              number: 8082

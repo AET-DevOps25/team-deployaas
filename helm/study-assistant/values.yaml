@@ -1,0 +1,162 @@
+# Default values for study-assistant.
+# This is a YAML-formatted file.
+
+namespace: devops25-team-deployaas
+
+image:
+  registry: ghcr.io
+  repository: aet-devops25/team-deployaas
+  tag: latest
+  pullPolicy: Always
+
+# Application configuration
+config:
+  environment: k8s
+  frontendOrigin: https://study-assistant.devops25-team-deployaas.rancher.ase.cit.tum.de
+  
+  # Service URLs
+  authServiceUrl: https://auth.devops25-team-deployaas.rancher.ase.cit.tum.de
+  quizServiceUrl: https://quiz.devops25-team-deployaas.rancher.ase.cit.tum.de
+  flashcardServiceUrl: https://flashcard.devops25-team-deployaas.rancher.ase.cit.tum.de
+
+# Database configuration
+database:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "14"
+    pullPolicy: IfNotPresent
+  
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""
+  
+  credentials:
+    username: postgres
+    password: initexample
+    database: initexample
+  
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+# Services configuration
+services:
+  authService:
+    enabled: true
+    replicas: 2
+    port: 8083
+    image: auth-service
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+        ephemeral-storage: 1Gi
+      limits:
+        memory: 512Mi
+        cpu: 500m
+        ephemeral-storage: 2Gi
+  
+  quizService:
+    enabled: true
+    replicas: 2
+    port: 8081
+    image: quiz-service
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+        ephemeral-storage: 1Gi
+      limits:
+        memory: 512Mi
+        cpu: 500m
+        ephemeral-storage: 2Gi
+  
+  flashcardService:
+    enabled: true
+    replicas: 2
+    port: 8082
+    image: flashcard-service
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+        ephemeral-storage: 1Gi
+      limits:
+        memory: 512Mi
+        cpu: 500m
+        ephemeral-storage: 2Gi
+  
+  client:
+    enabled: true
+    replicas: 3
+    port: 3000
+    image: client
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+        ephemeral-storage: 512Mi
+      limits:
+        memory: 256Mi
+        cpu: 200m
+        ephemeral-storage: 1Gi
+
+# pgAdmin configuration
+pgadmin:
+  enabled: true
+  image:
+    repository: dpage/pgadmin4
+    tag: "6.21"
+    pullPolicy: IfNotPresent
+  
+  credentials:
+    email: admin@you.com
+    password: AdminPass123!
+  
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
+      ephemeral-storage: 1Gi
+    limits:
+      memory: 512Mi
+      cpu: 500m
+      ephemeral-storage: 2Gi
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+  
+  hosts:
+    main: study-assistant.devops25-team-deployaas.rancher.ase.cit.tum.de
+    auth: auth.devops25-team-deployaas.rancher.ase.cit.tum.de
+    quiz: quiz.devops25-team-deployaas.rancher.ase.cit.tum.de
+    flashcard: flashcard.devops25-team-deployaas.rancher.ase.cit.tum.de
+    pgadmin: pgadmin.devops25-team-deployaas.rancher.ase.cit.tum.de
+  
+  tls:
+    enabled: true
+    secretName: study-assistant-tls
+
+# Security settings
+security:
+  automountServiceAccountToken: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000

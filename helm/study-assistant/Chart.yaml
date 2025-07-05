@@ -1,0 +1,17 @@
+apiVersion: v2
+name: study-assistant
+description: A Helm chart for Study Assistant application with microservices
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - study-assistant
+  - microservices
+  - education
+  - devops
+home: https://github.com/AET-DevOps25/team-deployaas
+sources:
+  - https://github.com/AET-DevOps25/team-deployaas
+maintainers:
+  - name: DevOps25 Team DeployaaS
+    email: devops25-team-deployaas@example.com
