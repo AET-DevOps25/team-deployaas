@@ -297,7 +297,7 @@ def parse_feedback_response(response_text: str) -> tuple:
                     score_text = line.replace("**SCORE:**", "").strip()
                     score = float(score_text)
                     score = max(0.0, min(1.0, score))
-                except:
+                except ValueError:
                     score = 0.5
             elif line.startswith("**FEEDBACK:**"):
                 feedback = line.replace("**FEEDBACK:**", "").strip()
@@ -325,34 +325,14 @@ async def get_available_models():
         "models": {
             "openai": {
                 "available": openai_client is not None,
-                "description": "OpenAI GPT-3.5-turbo model for high-quality feedback"
-            },
-            "local": {
-                "available": local_model is not None,
-                "description": "Lightweight local AI model for fast, privacy-focused feedback"
-            },
-            "advanced": {
-                "available": feedback_analyzer is not None,
-                "description": "Advanced semantic similarity analyzer"
-            }
-        }
-    }
-
-@app.get("/api/models")
-async def get_available_models():
-    """Get information about available AI models"""
-    return {
-        "models": {
-            "openai": {
-                "available": openai_client is not None,
                 "description": "OpenAI GPT-3.5-turbo model for high-quality feedback",
                 "size": "Cloud-based",
                 "speed": "2-5 seconds"
             },
             "local": {
                 "available": lightweight_ai is not None and lightweight_ai.is_available() if lightweight_ai else False,
-                "description": "Lightweight local AI with T5 and sentence transformers",
-                "size": "~350MB",
+                "description": "Lightweight local AI with sentence transformers",
+                "size": "~80MB", 
                 "speed": "1-2 seconds"
             },
             "advanced": {
