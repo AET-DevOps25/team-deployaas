@@ -1,7 +1,7 @@
 ---
 - name: Install Docker and Docker Compose
   hosts: all
-  become: yes
+  become: true
   gather_facts: true
   vars:
     ansible_python_interpreter: /usr/bin/python3
@@ -45,7 +45,7 @@
 
 - name: Create new Linux user for deployment
   hosts: all
-  become: yes
+  become: true
   gather_facts: false
   vars:
     ansible_python_interpreter: /usr/bin/python3
@@ -61,7 +61,7 @@
 
 - name: Copy all service directories to remote server
   hosts: all
-  become: yes
+  become: true
   gather_facts: false
   vars:
     ansible_python_interpreter: /usr/bin/python3
@@ -78,14 +78,12 @@
         - client
         - database
         - flashcard-service
-        - frontend
-        - genai
         - quiz-service
 
 
 - name: Deploy Docker Compose project
   hosts: all
-  become: yes
+  become: true
   gather_facts: false
   vars:
     ansible_python_interpreter: /usr/bin/python3
