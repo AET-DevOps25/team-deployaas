@@ -51,7 +51,6 @@ class FeedbackRequest(BaseModel):
     model_type: Optional[str] = "local"  # "openai" or "local"
 
 class FeedbackResponse(BaseModel):
-    score: float  # 0.0 to 1.0
     feedback: str
     suggestions: list[str]
     strengths: list[str]
@@ -180,10 +179,9 @@ async def generate_openai_feedback(request: FeedbackRequest) -> FeedbackResponse
         )
         
         feedback_text = response.choices[0].message.content
-        score, feedback, suggestions, strengths, weaknesses = parse_feedback_response(feedback_text)
+        feedback, suggestions, strengths, weaknesses = parse_feedback_response(feedback_text)
         
         return FeedbackResponse(
-            score=score,
             feedback=feedback,
             suggestions=suggestions,
             strengths=strengths,
@@ -206,7 +204,6 @@ async def generate_lightweight_feedback(request: FeedbackRequest) -> FeedbackRes
         )
         
         return FeedbackResponse(
-            score=result["score"],
             feedback=result["feedback"],
             suggestions=result["suggestions"],
             strengths=result["strengths"],
@@ -233,7 +230,6 @@ async def generate_analyzer_feedback(request: FeedbackRequest) -> FeedbackRespon
         )
         
         return FeedbackResponse(
-            score=result["score"],
             feedback=result["feedback"],
             suggestions=result["suggestions"],
             strengths=result["strengths"],
@@ -260,8 +256,6 @@ Please analyze this student's answer to a quiz question and provide detailed fee
 
 Please provide your analysis in the following format:
 
-**SCORE:** [A number between 0.0 and 1.0 representing how good the answer is]
-
 **FEEDBACK:** [2-3 sentences of overall feedback]
 
 **STRENGTHS:** [List 2-3 things the student did well, separated by |]
@@ -284,7 +278,6 @@ def parse_feedback_response(response_text: str) -> tuple:
     try:
         lines = response_text.strip().split('\n')
         
-        score = 0.5  # default
         feedback = "Feedback generated successfully."
         strengths = ["Answer provided"]
         weaknesses = ["Could be more detailed"]
@@ -292,14 +285,7 @@ def parse_feedback_response(response_text: str) -> tuple:
         
         for line in lines:
             line = line.strip()
-            if line.startswith("**SCORE:**"):
-                try:
-                    score_text = line.replace("**SCORE:**", "").strip()
-                    score = float(score_text)
-                    score = max(0.0, min(1.0, score))
-                except ValueError:
-                    score = 0.5
-            elif line.startswith("**FEEDBACK:**"):
+            if line.startswith("**FEEDBACK:**"):
                 feedback = line.replace("**FEEDBACK:**", "").strip()
             elif line.startswith("**STRENGTHS:**"):
                 strengths_text = line.replace("**STRENGTHS:**", "").strip()
@@ -311,12 +297,12 @@ def parse_feedback_response(response_text: str) -> tuple:
                 suggestions_text = line.replace("**SUGGESTIONS:**", "").strip()
                 suggestions = [s.strip() for s in suggestions_text.split("|") if s.strip()]
         
-        return score, feedback, suggestions, strengths, weaknesses
+        return feedback, suggestions, strengths, weaknesses
         
     except Exception as e:
         logger.error(f"Error parsing feedback response: {e}")
         # Return safe defaults
-        return 0.5, "Feedback generated successfully.", ["Answer provided"], ["Could be more detailed"], ["Review the topic further"]
+        return "Feedback generated successfully.", ["Answer provided"], ["Could be more detailed"], ["Review the topic further"]
 
 @app.get("/api/models")
 async def get_available_models():

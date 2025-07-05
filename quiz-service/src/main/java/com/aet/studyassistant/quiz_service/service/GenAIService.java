@@ -156,7 +156,6 @@ public class GenAIService {
     
     private Map<String, Object> createFallbackResponse() {
         Map<String, Object> fallbackResponse = new HashMap<>();
-        fallbackResponse.put("score", 0.7);
         fallbackResponse.put("feedback", "Your answer has been submitted. AI feedback is temporarily unavailable, but your response shows good understanding of the topic.");
         fallbackResponse.put("suggestions", new String[]{"Review the sample solution", "Practice explaining concepts clearly"});
         fallbackResponse.put("strengths", new String[]{"Answer provided", "Shows effort and engagement"});

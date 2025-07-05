@@ -139,11 +139,7 @@ class AdvancedFeedbackAnalyzer:
         suggestions = self.generate_suggestions(feedback_data, missing_concepts)
         overall_feedback = self.generate_overall_feedback(feedback_data)
         
-        # Calculate final score (weighted combination)
-        final_score = self.calculate_final_score(similarity_score, covered_concepts, missing_concepts, length_ratio)
-        
         return {
-            "score": final_score,
             "feedback": overall_feedback,
             "strengths": strengths,
             "weaknesses": weaknesses,

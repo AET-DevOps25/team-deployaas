@@ -161,7 +161,7 @@ def demonstrate_genai_workflow():
         "🔄 Real-time feedback in the quiz interface",
         "🐳 Fully containerized microservice architecture",
         "⚡ Fallback responses when AI is unavailable",
-        "🔍 Advanced analysis option for deeper insights"
+        "🔍 Semantic analysis option for deeper insights"
     ]
     
     for feature in features:
