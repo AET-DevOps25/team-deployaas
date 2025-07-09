@@ -294,7 +294,7 @@ const submitAnswer = async () => {
   submittingAnswer.value = true;
   try {
     const response = await fetch(
-      `http://localhost:8081/api/quiz/questions/${currentQuestion.value.id}/submit`,
+      `/api/quiz/questions/${currentQuestion.value.id}/submit`,
       {
         method: "POST",
         headers: {
@@ -329,7 +329,7 @@ const submitAdvancedAnswer = async () => {
   submittingAnswer.value = true;
   try {
     const response = await fetch(
-      `http://localhost:8081/api/quiz/questions/${currentQuestion.value.id}/submit/advanced`,
+      `/api/quiz/questions/${currentQuestion.value.id}/submit/advanced`,
       {
         method: "POST",
         headers: {

@@ -1,5 +1,5 @@
 """
-Advanced feedback analysis using semantic similarity and NLP techniques
+Semantic similarity analysis for educational feedback
 """
 
 from sentence_transformers import SentenceTransformer
@@ -11,10 +11,10 @@ from typing import Tuple, List
 
 logger = logging.getLogger(__name__)
 
-class AdvancedFeedbackAnalyzer:
+class SemanticAnalyzer:
     """
-    Advanced analyzer that uses semantic similarity and NLP techniques
-    to provide detailed feedback on quiz answers.
+    Semantic similarity analyzer for educational feedback.
+    This provides pure semantic analysis without generative AI.
     """
     
     def __init__(self):
@@ -66,8 +66,7 @@ class AdvancedFeedbackAnalyzer:
         # Remove common punctuation that doesn't affect meaning
         text = re.sub(r'[^\w\s\-\']', ' ', text)
         
-        return text
-    
+        return text    
     def extract_key_concepts(self, text: str) -> List[str]:
         """Extract key concepts from text (simplified approach)"""
         # This is a basic implementation - could be enhanced with NER
@@ -103,137 +102,65 @@ class AdvancedFeedbackAnalyzer:
         
         return covered, missing
     
-    def generate_detailed_feedback(self, 
-                                 question: str,
-                                 user_answer: str, 
-                                 sample_solution: str) -> dict:
+    def generate_semantic_feedback(self, question_text: str, user_answer: str, sample_solution: str) -> dict:
         """
-        Generate comprehensive feedback using multiple analysis techniques
+        Generate structured feedback using semantic similarity analysis
+        
+        Returns:
+            dict: Structured feedback with feedback, suggestions, strengths, weaknesses
         """
-        # Calculate semantic similarity
-        similarity_score = self.analyze_semantic_similarity(user_answer, sample_solution)
-        
-        # Analyze concept coverage
-        covered_concepts, missing_concepts = self.analyze_coverage(user_answer, sample_solution)
-        
-        # Basic length and structure analysis
-        user_length = len(user_answer.split())
-        sample_length = len(sample_solution.split())
-        length_ratio = user_length / max(sample_length, 1)
-        
-        # Generate feedback components
-        feedback_data = {
-            "similarity_score": similarity_score,
-            "covered_concepts": covered_concepts,
-            "missing_concepts": missing_concepts,
-            "length_analysis": {
-                "user_words": user_length,
-                "sample_words": sample_length,
-                "ratio": length_ratio
+        try:
+            # Calculate similarity
+            similarity = self.analyze_semantic_similarity(user_answer, sample_solution)
+            
+            # Analyze concept coverage
+            covered, missing = self.analyze_coverage(user_answer, sample_solution)
+            
+            # Generate feedback based on similarity score
+            if similarity >= 0.8:
+                feedback = f"Excellent semantic match ({similarity:.2f}). Your answer aligns very well with the expected solution."
+            elif similarity >= 0.6:
+                feedback = f"Good semantic match ({similarity:.2f}). Your answer covers the main concepts well."
+            elif similarity >= 0.4:
+                feedback = f"Moderate semantic match ({similarity:.2f}). Your answer addresses some key points."
+            else:
+                feedback = f"Low semantic match ({similarity:.2f}). Your answer differs significantly from the expected solution."
+            
+            # Generate structured components
+            strengths = []
+            if covered:
+                strengths.append(f"Covered key concepts: {', '.join(covered[:3])}")
+            if similarity >= 0.6:
+                strengths.append("Good conceptual understanding demonstrated")
+            if not strengths:
+                strengths.append("Attempted to answer the question")
+            
+            weaknesses = []
+            if missing:
+                weaknesses.append(f"Missing concepts: {', '.join(missing[:3])}")
+            if similarity < 0.6:
+                weaknesses.append("Could be more comprehensive")
+            
+            suggestions = [
+                "Review the sample solution for completeness",
+                "Focus on incorporating key concepts",
+                "Practice explaining concepts in your own words"
+            ]
+            
+            return {
+                "feedback": feedback,
+                "suggestions": suggestions,
+                "strengths": strengths,
+                "weaknesses": weaknesses,
+                "similarity_score": similarity
             }
-        }
-        
-        # Generate structured feedback
-        strengths = self.generate_strengths(feedback_data)
-        weaknesses = self.generate_weaknesses(feedback_data)
-        suggestions = self.generate_suggestions(feedback_data, missing_concepts)
-        overall_feedback = self.generate_overall_feedback(feedback_data)
-        
-        return {
-            "feedback": overall_feedback,
-            "strengths": strengths,
-            "weaknesses": weaknesses,
-            "suggestions": suggestions,
-            "analysis": feedback_data
-        }
-    
-    def calculate_final_score(self, similarity: float, covered: List[str], 
-                            missing: List[str], length_ratio: float) -> float:
-        """Calculate final score using weighted metrics"""
-        
-        # Semantic similarity (50% weight)
-        semantic_weight = 0.5
-        
-        # Concept coverage (30% weight)
-        total_concepts = len(covered) + len(missing)
-        coverage_score = len(covered) / max(total_concepts, 1) if total_concepts > 0 else 0.5
-        coverage_weight = 0.3
-        
-        # Length appropriateness (20% weight)
-        # Penalize too short or too long answers
-        length_score = 1.0 if 0.5 <= length_ratio <= 2.0 else max(0.3, 1.0 - abs(length_ratio - 1.0) * 0.2)
-        length_weight = 0.2
-        
-        final_score = (similarity * semantic_weight + 
-                      coverage_score * coverage_weight + 
-                      length_score * length_weight)
-        
-        return max(0.0, min(1.0, final_score))
-    
-    def generate_strengths(self, feedback_data: dict) -> List[str]:
-        """Generate list of strengths based on analysis"""
-        strengths = []
-        
-        if feedback_data["similarity_score"] > 0.7:
-            strengths.append("Your answer shows strong conceptual understanding")
-        
-        if len(feedback_data["covered_concepts"]) > 2:
-            strengths.append(f"You covered key concepts: {', '.join(feedback_data['covered_concepts'][:3])}")
-        
-        if 0.8 <= feedback_data["length_analysis"]["ratio"] <= 1.5:
-            strengths.append("Your answer has appropriate length and detail")
-        
-        if not strengths:
-            strengths.append("You provided a complete response to the question")
-        
-        return strengths
-    
-    def generate_weaknesses(self, feedback_data: dict) -> List[str]:
-        """Generate list of weaknesses based on analysis"""
-        weaknesses = []
-        
-        if feedback_data["similarity_score"] < 0.5:
-            weaknesses.append("Your answer could be more aligned with the key concepts")
-        
-        if len(feedback_data["missing_concepts"]) > 2:
-            weaknesses.append(f"Consider including concepts like: {', '.join(feedback_data['missing_concepts'][:3])}")
-        
-        if feedback_data["length_analysis"]["ratio"] < 0.5:
-            weaknesses.append("Your answer could be more detailed and comprehensive")
-        elif feedback_data["length_analysis"]["ratio"] > 2.0:
-            weaknesses.append("Your answer might be too verbose - focus on key points")
-        
-        if not weaknesses:
-            weaknesses.append("Minor improvements could enhance clarity")
-        
-        return weaknesses
-    
-    def generate_suggestions(self, feedback_data: dict, missing_concepts: List[str]) -> List[str]:
-        """Generate actionable suggestions"""
-        suggestions = []
-        
-        if missing_concepts:
-            suggestions.append(f"Include discussion of: {', '.join(missing_concepts[:2])}")
-        
-        if feedback_data["similarity_score"] < 0.6:
-            suggestions.append("Review the sample solution to understand key points")
-        
-        if feedback_data["length_analysis"]["ratio"] < 0.7:
-            suggestions.append("Provide more detailed explanations and examples")
-        
-        suggestions.append("Practice explaining concepts in your own words")
-        
-        return suggestions
-    
-    def generate_overall_feedback(self, feedback_data: dict) -> str:
-        """Generate overall feedback summary"""
-        score = feedback_data["similarity_score"]
-        
-        if score >= 0.8:
-            return "Excellent answer! You demonstrate strong understanding of the key concepts."
-        elif score >= 0.6:
-            return "Good answer with solid understanding. Some minor improvements could strengthen your response."
-        elif score >= 0.4:
-            return "Decent attempt with room for improvement. Focus on key concepts and provide more detail."
-        else:
-            return "Your answer needs significant improvement. Review the material and try to address the core concepts."
+            
+        except Exception as e:
+            logger.error(f"Error generating semantic feedback: {e}")
+            return {
+                "feedback": "Unable to analyze similarity",
+                "suggestions": ["Try again later"],
+                "strengths": ["Provided an answer"],
+                "weaknesses": ["Analysis unavailable"],
+                "similarity_score": 0.5
+            }
