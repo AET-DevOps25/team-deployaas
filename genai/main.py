@@ -21,8 +21,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from datetime import datetime
-from feedback_analyzer import AdvancedFeedbackAnalyzer
-from lightweight_ai import LightweightAI
+from feedback_analyzer import SemanticAnalyzer
+from local_llm_real import RealLocalLLM
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -60,8 +60,8 @@ class FeedbackResponse(BaseModel):
 
 # Global variables for models
 openai_client = None
-lightweight_ai = None  # Replaced local_model with lightweight_ai
-feedback_analyzer = None
+local_llm = None  # Real Local LLM using transformers for generative AI
+semantic_analyzer = None
 
 @app.on_event("startup")
 async def startup_event():
@@ -70,12 +70,12 @@ async def startup_event():
     await initialize_models()
 
 async def initialize_models():
-    """Initialize both OpenAI and lightweight local models"""
-    global openai_client, lightweight_ai, feedback_analyzer
+    """Initialize OpenAI, Local LLM, and semantic analyzer models"""
+    global openai_client, local_llm, semantic_analyzer
     
-    # Initialize advanced feedback analyzer
-    feedback_analyzer = AdvancedFeedbackAnalyzer()
-    logger.info("Advanced feedback analyzer initialized")
+    # Initialize semantic analyzer
+    semantic_analyzer = SemanticAnalyzer()
+    logger.info("Semantic analyzer initialized")
     
     # Initialize OpenAI client if API key is available
     openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -88,17 +88,17 @@ async def initialize_models():
     else:
         logger.warning("OPENAI_API_KEY not found, OpenAI features will be disabled")
     
-    # Initialize lightweight AI model (replaces GPT4All)
+    # Initialize Real Local LLM (using transformers for actual text generation)
     try:
-        lightweight_ai = LightweightAI()
-        if lightweight_ai.initialize():
-            logger.info("Lightweight AI model initialized successfully")
+        local_llm = RealLocalLLM()
+        if local_llm.initialize():
+            logger.info("Real Local LLM initialized successfully")
         else:
-            logger.warning("Failed to initialize lightweight AI model")
-            lightweight_ai = None
+            logger.warning("Failed to initialize Real Local LLM")
+            local_llm = None
     except Exception as e:
-        logger.warning(f"Failed to initialize lightweight AI: {e}")
-        lightweight_ai = None
+        logger.warning(f"Failed to initialize Real Local LLM: {e}")
+        local_llm = None
 
 @app.get("/")
 async def root():
@@ -108,7 +108,8 @@ async def root():
         "status": "running",
         "version": "1.0.0",
         "openai_available": openai_client is not None,
-        "local_model_available": lightweight_ai is not None and lightweight_ai.is_available() if lightweight_ai else False
+        "local_llm_available": local_llm is not None and local_llm.is_available() if local_llm else False,
+        "semantic_analyzer_available": semantic_analyzer is not None
     }
 
 @app.get("/health")
@@ -119,7 +120,8 @@ async def health_check():
         "timestamp": datetime.now().isoformat(),
         "models": {
             "openai": openai_client is not None,
-            "local": lightweight_ai is not None and lightweight_ai.is_available() if lightweight_ai else False
+            "local_llm": local_llm is not None and local_llm.is_available() if local_llm else False,
+            "semantic_analyzer": semantic_analyzer is not None
         }
     }
 
@@ -127,17 +129,37 @@ async def health_check():
 async def generate_feedback(request: FeedbackRequest):
     """
     Generate AI-powered feedback for a quiz answer
+    Priority: OpenAI → Real Local LLM → "Local LLM unavailable" 
     """
     try:
         logger.info(f"Generating feedback using {request.model_type} model")
         
         if request.model_type == "openai" and openai_client:
             return await generate_openai_feedback(request)
-        elif request.model_type == "local" and lightweight_ai and lightweight_ai.is_available():
-            return await generate_lightweight_feedback(request)
+        elif request.model_type == "local":
+            # Always try real LLM for local model type (even if answers are nonsensical)
+            if local_llm and local_llm.is_available():
+                return await generate_local_llm_feedback(request)
+            else:
+                # Return simple unavailable message if LLM is not available
+                return FeedbackResponse(
+                    feedback="Local LLM unavailable.",
+                    suggestions=["Try again later", "Use semantic analysis for basic comparison"],
+                    strengths=[],
+                    weaknesses=[],
+                    model_used="unavailable",
+                    timestamp=datetime.now().isoformat()
+                )
         else:
-            # Fallback to advanced analyzer
-            return await generate_analyzer_feedback(request)
+            # Default fallback
+            return FeedbackResponse(
+                feedback="Invalid model type specified.",
+                suggestions=["Use 'local' or 'openai' model type"],
+                strengths=[],
+                weaknesses=[],
+                model_used="unavailable",
+                timestamp=datetime.now().isoformat()
+            )
     
     except Exception as e:
         logger.error(f"Error generating feedback: {e}")
@@ -146,13 +168,21 @@ async def generate_feedback(request: FeedbackRequest):
 @app.post("/api/feedback/advanced", response_model=FeedbackResponse)
 async def generate_advanced_feedback(request: FeedbackRequest):
     """
-    Generate advanced feedback using semantic similarity analysis
+    Legacy endpoint - redirects to semantic analysis for backward compatibility
+    """
+    logger.info("Legacy /api/feedback/advanced called, redirecting to semantic analysis")
+    return await generate_semantic_analysis(request)
+
+@app.post("/api/semantic", response_model=FeedbackResponse)
+async def generate_semantic_analysis(request: FeedbackRequest):
+    """
+    Generate semantic similarity analysis (pure similarity comparison)
     """
     try:
-        return await generate_analyzer_feedback(request)
+        return await generate_semantic_feedback(request)
         
     except Exception as e:
-        logger.error(f"Error generating advanced feedback: {e}")
+        logger.error(f"Error generating semantic analysis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 async def generate_openai_feedback(request: FeedbackRequest) -> FeedbackResponse:
@@ -194,13 +224,14 @@ async def generate_openai_feedback(request: FeedbackRequest) -> FeedbackResponse
         logger.error(f"OpenAI API error: {e}")
         raise HTTPException(status_code=500, detail=f"OpenAI API error: {str(e)}")
 
-async def generate_lightweight_feedback(request: FeedbackRequest) -> FeedbackResponse:
-    """Generate feedback using lightweight AI model"""
+async def generate_local_llm_feedback(request: FeedbackRequest) -> FeedbackResponse:
+    """Generate feedback using Real Local LLM (transformers-based generative AI)"""
     
     try:
-        result = lightweight_ai.generate_feedback(
-            request.user_answer,
-            request.sample_solution
+        result = local_llm.generate_feedback(
+            user_answer=request.user_answer,
+            sample_solution=request.sample_solution,
+            question_text=request.question_text
         )
         
         return FeedbackResponse(
@@ -208,22 +239,22 @@ async def generate_lightweight_feedback(request: FeedbackRequest) -> FeedbackRes
             suggestions=result["suggestions"],
             strengths=result["strengths"],
             weaknesses=result["weaknesses"],
-            model_used="lightweight-ai",
+            model_used=result["model_used"],
             timestamp=datetime.now().isoformat()
         )
         
     except Exception as e:
-        logger.error(f"Lightweight AI error: {e}")
-        raise HTTPException(status_code=500, detail=f"Lightweight AI error: {str(e)}")
+        logger.error(f"Local LLM error: {e}")
+        raise HTTPException(status_code=500, detail=f"Local LLM error: {str(e)}")
 
-async def generate_analyzer_feedback(request: FeedbackRequest) -> FeedbackResponse:
-    """Generate feedback using the advanced analyzer"""
+async def generate_semantic_feedback(request: FeedbackRequest) -> FeedbackResponse:
+    """Generate feedback using semantic similarity analysis"""
     
-    if not feedback_analyzer:
-        raise HTTPException(status_code=503, detail="Feedback analyzer not available")
+    if not semantic_analyzer:
+        raise HTTPException(status_code=503, detail="Semantic analyzer not available")
     
     try:
-        result = feedback_analyzer.generate_detailed_feedback(
+        result = semantic_analyzer.generate_semantic_feedback(
             request.question_text,
             request.user_answer,
             request.sample_solution
@@ -234,13 +265,13 @@ async def generate_analyzer_feedback(request: FeedbackRequest) -> FeedbackRespon
             suggestions=result["suggestions"],
             strengths=result["strengths"],
             weaknesses=result["weaknesses"],
-            model_used="advanced-analyzer",
+            model_used="semantic-analyzer",
             timestamp=datetime.now().isoformat()
         )
         
     except Exception as e:
-        logger.error(f"Analyzer error: {e}")
-        raise HTTPException(status_code=500, detail=f"Analyzer error: {str(e)}")
+        logger.error(f"Semantic analyzer error: {e}")
+        raise HTTPException(status_code=500, detail=f"Semantic analyzer error: {str(e)}")
 
 def create_feedback_prompt(question: str, user_answer: str, sample_solution: str) -> str:
     """Create a structured prompt for AI feedback generation"""
@@ -313,22 +344,29 @@ async def get_available_models():
                 "available": openai_client is not None,
                 "description": "OpenAI GPT-3.5-turbo model for high-quality feedback",
                 "size": "Cloud-based",
-                "speed": "2-5 seconds"
+                "speed": "2-5 seconds",
+                "endpoint": "/api/feedback"
             },
             "local": {
-                "available": lightweight_ai is not None and lightweight_ai.is_available() if lightweight_ai else False,
-                "description": "Lightweight local AI with sentence transformers",
-                "size": "~80MB", 
-                "speed": "1-2 seconds"
+                "available": local_llm is not None and local_llm.is_available() if local_llm else False,
+                "description": "Real Local LLM using HuggingFace transformers for generative AI feedback",
+                "size": "~500MB", 
+                "speed": "5-10 seconds",
+                "endpoint": "/api/feedback"
             },
-            "advanced": {
-                "available": feedback_analyzer is not None,
-                "description": "Advanced semantic similarity analyzer",
+            "semantic": {
+                "available": semantic_analyzer is not None,
+                "description": "Semantic similarity analyzer for concept comparison",
                 "size": "~80MB",
-                "speed": "<1 second"
+                "speed": "<1 second",
+                "endpoint": "/api/semantic"
             }
         },
-        "default_model": "local" if lightweight_ai and lightweight_ai.is_available() else "advanced"
+        "default_model": "local" if local_llm and local_llm.is_available() else "semantic",
+        "endpoints": {
+            "/api/feedback": "AI-powered feedback (OpenAI → Local LLM → unavailable message)",
+            "/api/semantic": "Pure semantic similarity analysis"
+        }
     }
 
 if __name__ == "__main__":

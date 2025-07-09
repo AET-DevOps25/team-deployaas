@@ -225,7 +225,7 @@ The Vue.js frontend integrates with the GenAI feedback through the quiz interfac
 
 1. **Local Models**:
 
-   - Add new model class in `lightweight_ai.py` or create new module
+   - Add new model class in `local_llm_real.py` or create new module
    - Register in `initialize_models()` in `main.py`
    - Add model availability check in health endpoints
 
