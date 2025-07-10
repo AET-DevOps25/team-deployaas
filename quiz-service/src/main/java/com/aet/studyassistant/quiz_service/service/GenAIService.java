@@ -1,9 +1,9 @@
 package com.aet.studyassistant.quiz_service.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -18,16 +18,14 @@ public class GenAIService {
     private static final Logger logger = LoggerFactory.getLogger(GenAIService.class);
     
     private final WebClient webClient;
-    private final ObjectMapper objectMapper;
     
     @Value("${genai.service.url:http://genai-service:8084}")
     private String genaiServiceUrl;
     
-    public GenAIService(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
+    public GenAIService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder
                 .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(1024 * 1024))
                 .build();
-        this.objectMapper = objectMapper;
     }
     
     /**
@@ -46,19 +44,29 @@ public class GenAIService {
             logger.info("Sending feedback request to GenAI service at: {}", genaiServiceUrl);
             
             // Make HTTP call to GenAI service
-            Mono<Map> responseMono = webClient
+            Mono<Map<String, Object>> responseMono = webClient
                     .post()
                     .uri(genaiServiceUrl + "/api/feedback")
                     .header("Content-Type", "application/json")
                     .bodyValue(requestBody)
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .timeout(Duration.ofSeconds(30)); // 30 second timeout
             
             Map<String, Object> response = responseMono.block();
             
             if (response != null) {
                 logger.info("Successfully received feedback from GenAI service");
+                
+                // If this is the real local LLM response, remove strengths, weaknesses, and suggestions
+                if ("local".equals(modelType) && "real-local-llm".equals(response.get("model_used"))) {
+                    // Remove the fields that should not be displayed for real local LLM
+                    response.remove("strengths");
+                    response.remove("weaknesses");
+                    response.remove("suggestions");
+                    logger.info("Removed structured feedback components for real local LLM response");
+                }
+                
                 return response;
             } else {
                 logger.warn("Received null response from GenAI service");
@@ -86,13 +94,13 @@ public class GenAIService {
             logger.info("Sending advanced feedback request to GenAI service");
             
             // Make HTTP call to GenAI service
-            Mono<Map> responseMono = webClient
+            Mono<Map<String, Object>> responseMono = webClient
                     .post()
                     .uri(genaiServiceUrl + "/api/feedback/advanced")
                     .header("Content-Type", "application/json")
                     .bodyValue(requestBody)
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .timeout(Duration.ofSeconds(45)); // Longer timeout for advanced analysis
             
             Map<String, Object> response = responseMono.block();
@@ -116,11 +124,11 @@ public class GenAIService {
      */
     public boolean isGenAIServiceAvailable() {
         try {
-            Mono<Map> healthMono = webClient
+            Mono<Map<String, Object>> healthMono = webClient
                     .get()
                     .uri(genaiServiceUrl + "/health")
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .timeout(Duration.ofSeconds(5));
             
             Map<String, Object> healthResponse = healthMono.block();
@@ -137,11 +145,11 @@ public class GenAIService {
      */
     public Map<String, Object> getAvailableModels() {
         try {
-            Mono<Map> modelsMono = webClient
+            Mono<Map<String, Object>> modelsMono = webClient
                     .get()
                     .uri(genaiServiceUrl + "/api/models")
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .timeout(Duration.ofSeconds(10));
             
             return modelsMono.block();
@@ -157,9 +165,9 @@ public class GenAIService {
     private Map<String, Object> createFallbackResponse() {
         Map<String, Object> fallbackResponse = new HashMap<>();
         fallbackResponse.put("feedback", "Your answer has been submitted. AI feedback is temporarily unavailable, but your response shows good understanding of the topic.");
-        fallbackResponse.put("suggestions", new String[]{"Review the sample solution", "Practice explaining concepts clearly"});
-        fallbackResponse.put("strengths", new String[]{"Answer provided", "Shows effort and engagement"});
-        fallbackResponse.put("weaknesses", new String[]{"AI analysis unavailable"});
+        fallbackResponse.put("suggestions", new String[]{});  // Empty for local model consistency
+        fallbackResponse.put("strengths", new String[]{});    // Empty for local model consistency
+        fallbackResponse.put("weaknesses", new String[]{});   // Empty for local model consistency
         fallbackResponse.put("model_used", "fallback-response");
         fallbackResponse.put("timestamp", java.time.LocalDateTime.now().toString());
         return fallbackResponse;
