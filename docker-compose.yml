@@ -96,11 +96,11 @@ services:
 
   client:
     build:
-      context: ./client
+      context: ./frontend/client-vue
     container_name: studyapp_client
     restart: always
     ports:
-      - "3000:3000"
+      - "3000:80"
     depends_on:
       - auth-service
       - quiz-service

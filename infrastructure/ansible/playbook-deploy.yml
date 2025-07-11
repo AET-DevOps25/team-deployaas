@@ -1,0 +1,155 @@
+---
+- name: Deploy application from GitHub repository
+  hosts: all
+  become: yes
+  gather_facts: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    github_repo: "https://github.com/aet-devops25/team-deployaas.git"
+    app_directory: "/home/ec2-user/team-deployaas"
+    deployment_user: "ec2-user"
+    
+  tasks:
+    - name: Ensure deployment directory exists
+      file:
+        path: "{{ app_directory }}"
+        state: directory
+        owner: "{{ deployment_user }}"
+        group: "{{ deployment_user }}"
+        mode: '0755'
+
+    - name: Check if repository already exists
+      stat:
+        path: "{{ app_directory }}/.git"
+      register: git_repo_exists
+
+    - name: Clone GitHub repository
+      git:
+        repo: "{{ github_repo }}"
+        dest: "{{ app_directory }}"
+        version: dev
+        force: yes
+      become_user: "{{ deployment_user }}"
+      when: not git_repo_exists.stat.exists
+
+    - name: Pull latest changes if repository exists
+      git:
+        repo: "{{ github_repo }}"
+        dest: "{{ app_directory }}"
+        version: dev
+        force: yes
+      become_user: "{{ deployment_user }}"
+      when: git_repo_exists.stat.exists
+
+    - name: Create .env file for local development
+      copy:
+        dest: "{{ app_directory }}/.env"
+        content: |
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=password
+          POSTGRES_DB=initexample
+          OPENAI_API_KEY=
+          REACT_APP_AUTH_HOST={{ ansible_host }}:8083
+          REACT_APP_QUIZ_HOST={{ ansible_host }}:8081
+          REACT_APP_FLASHCARD_HOST={{ ansible_host }}:8082
+        owner: "{{ deployment_user }}"
+        group: "{{ deployment_user }}"
+        mode: '0600'
+
+    - name: Stop any running containers
+      shell: |
+        cd {{ app_directory }}
+        docker-compose down || true
+      become_user: "{{ deployment_user }}"
+      ignore_errors: yes
+
+    - name: Remove all Docker images to force rebuild
+      shell: |
+        cd {{ app_directory }}
+        docker-compose down --rmi all --volumes --remove-orphans || true
+      become_user: "{{ deployment_user }}"
+      ignore_errors: yes
+
+    - name: Clean up Docker system
+      shell: |
+        docker system prune -f || true
+      become_user: "{{ deployment_user }}"
+      ignore_errors: yes
+
+    - name: Reset git repository to latest dev
+      shell: |
+        cd {{ app_directory }}
+        git fetch origin
+        git reset --hard origin/dev
+        git clean -fd
+      become_user: "{{ deployment_user }}"
+
+    - name: Update docker-compose.yml with build args for client
+      shell: |
+        cd {{ app_directory }}
+        cat > docker-compose.override.yml << 'EOF'
+        services:
+          client:
+            build:
+              context: ./client
+              args:
+                REACT_APP_AUTH_HOST: {{ ansible_host }}:8083
+                REACT_APP_QUIZ_HOST: {{ ansible_host }}:8081
+                REACT_APP_FLASHCARD_HOST: {{ ansible_host }}:8082
+            ports:
+              - "3000:80"
+        EOF
+      become_user: "{{ deployment_user }}"
+
+    - name: Fix HTTPS to HTTP in App.js
+      shell: |
+        cd {{ app_directory }}/client/src
+        sed -i 's/https:\/\/${/http:\/\/${/g' App.js
+      become_user: "{{ deployment_user }}"
+
+    - name: Build and start application with Docker Compose (no cache)
+      shell: |
+        cd {{ app_directory }}
+        docker-compose build --no-cache
+        docker-compose up -d
+      become_user: "{{ deployment_user }}"
+      register: docker_compose_result
+
+    - name: Display Docker Compose output
+      debug:
+        msg: "{{ docker_compose_result.stdout }}"
+
+    - name: Wait for services to be ready
+      wait_for:
+        port: "{{ item }}"
+        host: localhost
+        delay: 10
+        timeout: 300
+      loop:
+        - 3000  # Client
+        - 8081  # Quiz service
+        - 8082  # Flashcard service
+        - 8083  # Auth service
+        - 8084  # GenAI service
+        - 5432  # PostgreSQL
+        - 8080  # PgAdmin
+
+    - name: Check running containers
+      shell: docker ps
+      register: running_containers
+      become_user: "{{ deployment_user }}"
+
+    - name: Display running containers
+      debug:
+        msg: "{{ running_containers.stdout }}"
+
+    - name: Display application URLs
+      debug:
+        msg: |
+          Application is now running!
+          - Frontend: http://{{ ansible_host }}:3000
+          - Quiz Service: http://{{ ansible_host }}:8081
+          - Flashcard Service: http://{{ ansible_host }}:8082
+          - Auth Service: http://{{ ansible_host }}:8083
+          - GenAI Service: http://{{ ansible_host }}:8084
+          - PgAdmin: http://{{ ansible_host }}:8080
