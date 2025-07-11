@@ -7,6 +7,7 @@ import com.aet.studyassistant.quiz_service.model.Question;
 import com.aet.studyassistant.quiz_service.service.ChapterService;
 import com.aet.studyassistant.quiz_service.service.CourseService;
 import com.aet.studyassistant.quiz_service.service.QuestionService;
+import com.aet.studyassistant.quiz_service.service.GenAIService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/quiz")
@@ -24,12 +27,15 @@ public class QuizController {
     private final ChapterService chapterService;
     private final QuestionService questionService;
     private final CourseService courseService;
+    private final GenAIService genAIService;
 
     @Autowired
-    public QuizController(ChapterService chapterService, QuestionService questionService, CourseService courseService) {
+    public QuizController(ChapterService chapterService, QuestionService questionService, 
+                         CourseService courseService, GenAIService genAIService) {
         this.chapterService = chapterService;
         this.questionService = questionService;
         this.courseService = courseService;
+        this.genAIService = genAIService;
     }
 
     @GetMapping("/test")
@@ -97,6 +103,101 @@ public class QuizController {
     public ResponseEntity<Question> getQuestion(@PathVariable UUID questionId) {
         Optional<Question> question = questionService.getQuestionById(questionId);
         return question.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/questions/{questionId}/submit")
+    public ResponseEntity<?> submitAnswer(@PathVariable UUID questionId, @RequestBody Map<String, String> request) {
+        try {
+            Optional<Question> questionOpt = questionService.getQuestionById(questionId);
+            if (questionOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Question question = questionOpt.get();
+            String userAnswer = request.get("answer");
+            String modelType = request.getOrDefault("model_type", "local");
+            
+            if (userAnswer == null || userAnswer.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Answer cannot be empty");
+            }
+
+            // Call GenAI service for feedback
+            Map<String, Object> feedbackResponse = genAIService.generateFeedback(
+                question.getText(),
+                userAnswer,
+                question.getSampleSolution(),
+                modelType
+            );
+            
+            // Add additional context to response
+            Map<String, Object> response = new HashMap<>(feedbackResponse);
+            response.put("questionId", questionId);
+            response.put("userAnswer", userAnswer);
+            response.put("questionText", question.getText());
+            response.put("chapterId", question.getChapter().getId());
+            response.put("chapterTitle", question.getChapter().getName());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error processing answer submission: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/questions/{questionId}/submit/advanced")
+    public ResponseEntity<?> submitAnswerAdvanced(@PathVariable UUID questionId, @RequestBody Map<String, String> request) {
+        try {
+            Optional<Question> questionOpt = questionService.getQuestionById(questionId);
+            if (questionOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Question question = questionOpt.get();
+            String userAnswer = request.get("answer");
+            
+            if (userAnswer == null || userAnswer.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Answer cannot be empty");
+            }
+
+            // Call GenAI service for advanced feedback
+            Map<String, Object> feedbackResponse = genAIService.generateAdvancedFeedback(
+                question.getText(),
+                userAnswer,
+                question.getSampleSolution()
+            );
+            
+            // Add additional context to response
+            Map<String, Object> response = new HashMap<>(feedbackResponse);
+            response.put("questionId", questionId);
+            response.put("userAnswer", userAnswer);
+            response.put("questionText", question.getText());
+            response.put("chapterId", question.getChapter().getId());
+            response.put("chapterTitle", question.getChapter().getName());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error processing advanced answer submission: " + e.getMessage());
+        }
+    }
+    
+    @GetMapping("/genai/health")
+    public ResponseEntity<?> getGenAIHealth() {
+        try {
+            boolean isAvailable = genAIService.isGenAIServiceAvailable();
+            Map<String, Object> healthResponse = new HashMap<>();
+            healthResponse.put("genai_service_available", isAvailable);
+            healthResponse.put("timestamp", java.time.LocalDateTime.now().toString());
+            
+            if (isAvailable) {
+                Map<String, Object> models = genAIService.getAvailableModels();
+                healthResponse.put("available_models", models);
+            }
+            
+            return ResponseEntity.ok(healthResponse);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error checking GenAI service health: " + e.getMessage());
+        }
     }
 
     // Helper methods to provide course metadata
