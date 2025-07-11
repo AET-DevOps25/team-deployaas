@@ -108,18 +108,18 @@ public class QuizController {
     @PostMapping("/questions/{questionId}/submit")
     public ResponseEntity<?> submitAnswer(@PathVariable UUID questionId, @RequestBody Map<String, String> request) {
         try {
+            String userAnswer = request.get("answer");
+            if (userAnswer == null || userAnswer.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Answer cannot be empty");
+            }
+
             Optional<Question> questionOpt = questionService.getQuestionById(questionId);
             if (questionOpt.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
 
             Question question = questionOpt.get();
-            String userAnswer = request.get("answer");
             String modelType = request.getOrDefault("model_type", "local");
-            
-            if (userAnswer == null || userAnswer.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Answer cannot be empty");
-            }
 
             // Call GenAI service for feedback
             Map<String, Object> feedbackResponse = genAIService.generateFeedback(
@@ -128,7 +128,7 @@ public class QuizController {
                 question.getSampleSolution(),
                 modelType
             );
-            
+
             // Add additional context to response
             Map<String, Object> response = new HashMap<>(feedbackResponse);
             response.put("questionId", questionId);
@@ -136,9 +136,8 @@ public class QuizController {
             response.put("questionText", question.getText());
             response.put("chapterId", question.getChapter().getId());
             response.put("chapterTitle", question.getChapter().getName());
-            
+
             return ResponseEntity.ok(response);
-            
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error processing answer submission: " + e.getMessage());
         }
