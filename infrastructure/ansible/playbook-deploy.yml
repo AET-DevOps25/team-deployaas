@@ -84,29 +84,6 @@
         git clean -fd
       become_user: "{{ deployment_user }}"
 
-    - name: Update docker-compose.yml with build args for client
-      shell: |
-        cd {{ app_directory }}
-        cat > docker-compose.override.yml << 'EOF'
-        services:
-          client:
-            build:
-              context: ./client
-              args:
-                REACT_APP_AUTH_HOST: {{ ansible_host }}:8083
-                REACT_APP_QUIZ_HOST: {{ ansible_host }}:8081
-                REACT_APP_FLASHCARD_HOST: {{ ansible_host }}:8082
-            ports:
-              - "3000:80"
-        EOF
-      become_user: "{{ deployment_user }}"
-
-    - name: Fix HTTPS to HTTP in App.js
-      shell: |
-        cd {{ app_directory }}/client/src
-        sed -i 's/https:\/\/${/http:\/\/${/g' App.js
-      become_user: "{{ deployment_user }}"
-
     - name: Build and start application with Docker Compose (no cache)
       shell: |
         cd {{ app_directory }}
