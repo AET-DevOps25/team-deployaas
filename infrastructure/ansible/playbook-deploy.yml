@@ -27,7 +27,7 @@
       git:
         repo: "{{ github_repo }}"
         dest: "{{ app_directory }}"
-        version: dev
+        version: ansible-terraform
         force: yes
       become_user: "{{ deployment_user }}"
       when: not git_repo_exists.stat.exists
@@ -36,7 +36,7 @@
       git:
         repo: "{{ github_repo }}"
         dest: "{{ app_directory }}"
-        version: dev
+        version: ansible-terraform
         force: yes
       become_user: "{{ deployment_user }}"
       when: git_repo_exists.stat.exists
@@ -45,13 +45,10 @@
       copy:
         dest: "{{ app_directory }}/.env"
         content: |
-          POSTGRES_USER=postgres
-          POSTGRES_PASSWORD=password
+          POSTGRES_USER=initexample
+          POSTGRES_PASSWORD=initexample
           POSTGRES_DB=initexample
           OPENAI_API_KEY=
-          REACT_APP_AUTH_HOST={{ ansible_host }}:8083
-          REACT_APP_QUIZ_HOST={{ ansible_host }}:8081
-          REACT_APP_FLASHCARD_HOST={{ ansible_host }}:8082
         owner: "{{ deployment_user }}"
         group: "{{ deployment_user }}"
         mode: '0600'
@@ -76,11 +73,11 @@
       become_user: "{{ deployment_user }}"
       ignore_errors: yes
 
-    - name: Reset git repository to latest dev
+    - name: Reset git repository to latest ansible-terraform
       shell: |
         cd {{ app_directory }}
         git fetch origin
-        git reset --hard origin/dev
+        git reset --hard origin/ansible-terraform
         git clean -fd
       become_user: "{{ deployment_user }}"
 

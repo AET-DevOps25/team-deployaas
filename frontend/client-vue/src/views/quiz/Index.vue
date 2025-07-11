@@ -218,6 +218,7 @@ import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
 } from "lucide-vue-next";
+import { getQuizApiUrl } from "../../config/api.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -266,16 +267,16 @@ const handleFinishQuiz = () => {
 };
 
 const goBackToCourse = () => {
-  // Get course ID from chapter data or default to devops
-  const courseId = chapter.value?.courseId || "devops";
+  // Get course ID from chapter data - if we don't have it, go to home
+  const courseId = chapter.value?.courseId;
 
   // Check if we should go back to home instead of courses
   const cameFromHome =
     router.options.history.state?.back === "/home" ||
     document.referrer.includes("/home");
 
-  if (cameFromHome) {
-    // If they came from home, go back to home
+  if (cameFromHome || !courseId) {
+    // If they came from home or we don't have a course ID, go back to home
     router.push("/home");
   } else {
     // Otherwise go to the course detail page
@@ -292,9 +293,11 @@ const submitAnswer = async () => {
   if (!currentAnswer.value.trim()) return;
 
   submittingAnswer.value = true;
+  const quizApiUrl = getQuizApiUrl();
+  
   try {
     const response = await fetch(
-      `/api/quiz/questions/${currentQuestion.value.id}/submit`,
+      `${quizApiUrl}/questions/${currentQuestion.value.id}/submit`,
       {
         method: "POST",
         headers: {
@@ -327,9 +330,11 @@ const submitAdvancedAnswer = async () => {
   if (!currentAnswer.value.trim()) return;
 
   submittingAnswer.value = true;
+  const quizApiUrl = getQuizApiUrl();
+  
   try {
     const response = await fetch(
-      `/api/quiz/questions/${currentQuestion.value.id}/submit/advanced`,
+      `${quizApiUrl}/questions/${currentQuestion.value.id}/submit/advanced`,
       {
         method: "POST",
         headers: {
@@ -367,17 +372,18 @@ const formatTimestamp = (timestamp) => {
 // Fetch data on component mount
 onMounted(async () => {
   const chapterId = route.params.chapterId;
+  const quizApiUrl = getQuizApiUrl();
 
   try {
     // Fetch chapter details
     const chapterRes = await fetch(
-      `http://localhost:8081/api/quiz/chapters/${chapterId}`
+      `${quizApiUrl}/chapters/${chapterId}`
     );
     chapter.value = await chapterRes.json();
 
     // Fetch questions for the selected chapter
     const questionsRes = await fetch(
-      `http://localhost:8081/api/quiz/chapters/${chapterId}/questions`
+      `${quizApiUrl}/chapters/${chapterId}/questions`
     );
     questions.value = await questionsRes.json();
   } catch (error) {

@@ -121,6 +121,14 @@ resource "aws_security_group" "myapp-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # GenAI Service
+  ingress {
+    from_port   = 8084
+    to_port     = 8084
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # Database Admin (pgAdmin)
   ingress {
     from_port   = 8080
