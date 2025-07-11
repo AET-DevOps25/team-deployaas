@@ -41,7 +41,19 @@
       become_user: "{{ deployment_user }}"
       when: git_repo_exists.stat.exists
 
-    - name: Create .env file for local development
+    - name: Get public IP address
+      uri:
+        url: http://ipv4.icanhazip.com
+        return_content: yes
+      register: public_ip_result
+      delegate_to: localhost
+      run_once: true
+
+    - name: Set public IP variable
+      set_fact:
+        public_ip: "{{ public_ip_result.content | trim }}"
+
+    - name: Create .env file for deployment
       copy:
         dest: "{{ app_directory }}/.env"
         content: |
@@ -49,6 +61,7 @@
           POSTGRES_PASSWORD=initexample
           POSTGRES_DB=initexample
           OPENAI_API_KEY=
+          FRONTEND_ORIGIN=http://{{ public_ip }}:3000
         owner: "{{ deployment_user }}"
         group: "{{ deployment_user }}"
         mode: '0600'
@@ -81,6 +94,15 @@
         git clean -fd
       become_user: "{{ deployment_user }}"
 
+    - name: Display current .env file content
+      shell: cat {{ app_directory }}/.env
+      register: env_content
+      become_user: "{{ deployment_user }}"
+
+    - name: Show .env file content
+      debug:
+        msg: "{{ env_content.stdout }}"
+
     - name: Build and start application with Docker Compose (no cache)
       shell: |
         cd {{ app_directory }}
@@ -89,9 +111,17 @@
       become_user: "{{ deployment_user }}"
       register: docker_compose_result
 
-    - name: Display Docker Compose output
+    - name: Check quiz service logs for CORS configuration
+      shell: |
+        cd {{ app_directory }}
+        docker-compose logs quiz-service | grep -i "cors\|frontend\|origin" || echo "No CORS-related logs found"
+      register: cors_logs
+      become_user: "{{ deployment_user }}"
+      ignore_errors: yes
+
+    - name: Display CORS logs
       debug:
-        msg: "{{ docker_compose_result.stdout }}"
+        msg: "{{ cors_logs.stdout }}"
 
     - name: Wait for services to be ready
       wait_for:
@@ -121,9 +151,9 @@
       debug:
         msg: |
           Application is now running!
-          - Frontend: http://{{ ansible_host }}:3000
-          - Quiz Service: http://{{ ansible_host }}:8081
-          - Flashcard Service: http://{{ ansible_host }}:8082
-          - Auth Service: http://{{ ansible_host }}:8083
-          - GenAI Service: http://{{ ansible_host }}:8084
-          - PgAdmin: http://{{ ansible_host }}:8080
+          - Frontend: http://{{ public_ip }}:3000
+          - Quiz Service: http://{{ public_ip }}:8081
+          - Flashcard Service: http://{{ public_ip }}:8082
+          - Auth Service: http://{{ public_ip }}:8083
+          - GenAI Service: http://{{ public_ip }}:8084
+          - PgAdmin: http://{{ public_ip }}:8080

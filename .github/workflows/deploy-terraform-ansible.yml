@@ -1,0 +1,97 @@
+name: Deploy to AWS with Terraform + Ansible
+
+on:
+  push:
+    branches: [ansible-terraform]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: Deploy Infrastructure and Application
+    runs-on: ubuntu-latest
+    environment: AWS
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+          terraform_wrapper: false
+
+      - name: Get current IP for security group
+        id: get-ip
+        run: |
+          CURRENT_IP=$(curl -s ipv4.icanhazip.com)
+          echo "current_ip=${CURRENT_IP}/32" >> $GITHUB_OUTPUT
+
+      - name: Terraform Init
+        working-directory: infrastructure
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: infrastructure
+        run: |
+          terraform plan \
+            -var="my_ip=${{ steps.get-ip.outputs.current_ip }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: infrastructure
+        run: terraform apply -auto-approve tfplan
+
+      - name: Get EC2 Instance IP
+        id: get-instance-ip
+        working-directory: infrastructure
+        run: |
+          INSTANCE_IP=$(terraform output -raw server-ip)
+          echo "instance_ip=${INSTANCE_IP}" >> $GITHUB_OUTPUT
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/devops.pem
+          chmod 600 ~/.ssh/devops.pem
+
+      - name: Update Ansible inventory
+        run: |
+          echo "${{ steps.get-instance-ip.outputs.instance_ip }} ansible_user=ec2-user ansible_ssh_private_key_file=~/.ssh/devops.pem" > infrastructure/ansible/inventory.ini
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Wait for EC2 instance to be ready
+        run: |
+          timeout 300 bash -c 'until ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i ~/.ssh/devops.pem ec2-user@${{ steps.get-instance-ip.outputs.instance_ip }} "echo ready"; do sleep 10; done'
+
+      - name: Run initial server setup
+        working-directory: infrastructure/ansible
+        run: |
+          ansible-playbook -i inventory.ini playbook-simple.yml
+
+      - name: Run application deployment
+        working-directory: infrastructure/ansible
+        run: |
+          ansible-playbook -i inventory.ini playbook-deploy.yml
+
+      - name: Display deployment info
+        run: |
+          echo "🎉 Deployment successful!"
+          echo "Frontend: http://${{ steps.get-instance-ip.outputs.instance_ip }}:3000"
+          echo "Quiz Service: http://${{ steps.get-instance-ip.outputs.instance_ip }}:8081"
+          echo "PgAdmin: http://${{ steps.get-instance-ip.outputs.instance_ip }}:8080"
