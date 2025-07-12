@@ -378,3 +378,7 @@ sketch
 #
 # Recommended template: Node.gitignore/data/
 /data/
+
+/server
+
+/.vscode
