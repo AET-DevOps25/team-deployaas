@@ -140,24 +140,18 @@ def call_openwebui_api(prompt: str, model_name: str = "llama3.3:latest") -> str:
 
 
 def create_feedback_prompt(question_text: str, sample_solution: str, user_answer: str) -> str:
-    """Create a feedback prompt."""
-    return f"""You are an expert educational AI assistant that provides constructive feedback on student answers. 
+    """Create a brief feedback prompt."""
+    return f"""You are an educational AI assistant. Provide brief, concise feedback on this student answer.
 
 QUESTION: {question_text}
-
 SAMPLE SOLUTION: {sample_solution}
-
 STUDENT'S ANSWER: {user_answer}
 
-Please analyze the student's answer compared to the sample solution and provide detailed feedback. Your response should be structured and helpful for learning.
+Provide feedback in 2-3 sentences maximum. Include:
+1. How good the answer is (poor/fair/good/excellent)
+2. Key areas for improvement (if any)
 
-Evaluate the answer based on:
-1. Correctness and accuracy
-2. Completeness of the response
-3. Understanding of key concepts
-4. Areas that need improvement
-
-Provide your feedback in a constructive, encouraging tone that helps the student learn and improve.
+Be direct and constructive. No introductory phrases or boilerplate text. Also, do not mention the sample solution explicitly.
 
 FEEDBACK:"""
 
@@ -379,7 +373,7 @@ async def generate_advanced_feedback(req: AdvancedFeedbackRequest) -> FeedbackRe
         
         # Fallback response in case of error
         return FeedbackResponse(
-            feedback="Advanced AI feedback service is temporarily unavailable. The system will still accept your answer for review.",
+            feedback="Advanced AI feedback service is temporarily unavailable.",
             strengths=[],
             weaknesses=[],
             suggestions=[],
