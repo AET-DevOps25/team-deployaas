@@ -53,45 +53,62 @@
 
             <!-- Submit Answer Buttons -->
             <div class="flex gap-2 mt-4 flex-wrap">
-              <button
-                @click="submitAnswer"
-                :disabled="!currentAnswer.trim() || submittingAnswer"
-                class="btn bg-purple-700 text-white hover:bg-purple-800"
+              <div
+                class="tooltip tooltip-bottom"
+                data-tip="Get quick AI feedback (2-3 sentences) on your answer quality"
               >
-                <span
-                  v-if="submittingAnswer"
-                  class="loading loading-spinner loading-sm"
-                ></span>
-                {{
-                  submittingAnswer ? "Getting AI Feedback..." : "Submit Answer"
-                }}
-              </button>
+                <button
+                  @click="submitAnswer"
+                  :disabled="!currentAnswer.trim() || submittingAnswer"
+                  class="btn bg-purple-700 text-white hover:bg-purple-800"
+                >
+                  <span
+                    v-if="submittingAnswer"
+                    class="loading loading-spinner loading-sm"
+                  ></span>
+                  {{
+                    submittingAnswer
+                      ? "Getting AI Feedback..."
+                      : "Submit Answer"
+                  }}
+                </button>
+              </div>
 
-              <button
-                @click="submitAdvancedAnswer"
-                :disabled="!currentAnswer.trim() || submittingAnswer"
-                class="btn btn-outline btn-secondary"
+              <div
+                class="tooltip tooltip-bottom"
+                data-tip="Receive detailed AI feedback with strengths, areas for improvement, and specific suggestions"
               >
-                <span
-                  v-if="submittingAnswer"
-                  class="loading loading-spinner loading-sm"
-                ></span>
-                {{
-                  submittingAnswer ? "Analyzing..." : "Get Advanced Feedback"
-                }}
-              </button>
+                <button
+                  @click="submitAdvancedAnswer"
+                  :disabled="!currentAnswer.trim() || submittingAnswer"
+                  class="btn btn-outline btn-secondary"
+                >
+                  <span
+                    v-if="submittingAnswer"
+                    class="loading loading-spinner loading-sm"
+                  ></span>
+                  {{
+                    submittingAnswer ? "Analyzing..." : "Get Advanced Feedback"
+                  }}
+                </button>
+              </div>
 
-              <button
-                @click="submitSemanticAnswer"
-                :disabled="!currentAnswer.trim() || submittingAnswer"
-                class="btn btn-outline btn-info"
+              <div
+                class="tooltip tooltip-bottom"
+                data-tip="Non-AI Semantic analysis comparing key concepts with sample solution (Warning: High similarity doesn't guarantee correctness)"
               >
-                <span
-                  v-if="submittingAnswer"
-                  class="loading loading-spinner loading-sm"
-                ></span>
-                {{ submittingAnswer ? "Analyzing..." : "Check Similarity" }}
-              </button>
+                <button
+                  @click="submitSemanticAnswer"
+                  :disabled="!currentAnswer.trim() || submittingAnswer"
+                  class="btn btn-outline btn-info"
+                >
+                  <span
+                    v-if="submittingAnswer"
+                    class="loading loading-spinner loading-sm"
+                  ></span>
+                  {{ submittingAnswer ? "Analyzing..." : "Check Similarity" }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
