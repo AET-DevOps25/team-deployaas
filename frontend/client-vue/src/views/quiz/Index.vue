@@ -76,7 +76,9 @@
                   v-if="submittingAnswer"
                   class="loading loading-spinner loading-sm"
                 ></span>
-                {{ submittingAnswer ? "Analyzing..." : "Semantic Analysis" }}
+                {{
+                  submittingAnswer ? "Analyzing..." : "Get Advanced Feedback"
+                }}
               </button>
             </div>
           </div>
