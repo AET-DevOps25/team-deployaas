@@ -5,6 +5,8 @@ from typing import Dict, Any, List, Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 import datetime
+import uvicorn
+from semantic_analyzer import get_semantic_analyzer
 
 # Environment configuration
 WEBUI_API_KEY = os.getenv("WEBUI_API_KEY")
@@ -37,6 +39,20 @@ class FeedbackRequest(BaseModel):
 class AdvancedFeedbackRequest(BaseModel):
     """
     Request schema for advanced feedback endpoint.
+
+    Attributes:
+        user_answer (str): The student's submitted answer
+        sample_solution (str): The correct/sample solution
+        question_text (str): The original question text for context
+    """
+    user_answer: str = Field(..., description="Student's submitted answer")
+    sample_solution: str = Field(..., description="Correct/sample solution")
+    question_text: str = Field(..., description="Original question text")
+
+
+class SemanticFeedbackRequest(BaseModel):
+    """
+    Request schema for semantic feedback endpoint.
 
     Attributes:
         user_answer (str): The student's submitted answer
@@ -383,6 +399,75 @@ async def generate_advanced_feedback(req: AdvancedFeedbackRequest) -> FeedbackRe
         )
 
 
+@app.post(
+    "/feedback/semantic",
+    response_model=FeedbackResponse,
+    summary="Generate semantic similarity feedback",
+    description="Generates feedback based on semantic similarity analysis without using generative AI"
+)
+async def generate_semantic_feedback(req: SemanticFeedbackRequest) -> FeedbackResponse:
+    """
+    Generate semantic similarity feedback without using generative AI.
+    
+    Args:
+        req: Request containing the question, sample solution, and user answer
+        
+    Returns:
+        FeedbackResponse containing semantic similarity analysis
+        
+    Raises:
+        HTTPException: If the analysis fails or required fields are missing
+    """
+    try:
+        if not req.user_answer.strip():
+            raise HTTPException(
+                status_code=400, 
+                detail="user_answer cannot be empty"
+            )
+        
+        if not req.sample_solution.strip():
+            raise HTTPException(
+                status_code=400, 
+                detail="sample_solution cannot be empty"
+            )
+        
+        # Get semantic analyzer instance
+        analyzer = get_semantic_analyzer()
+        
+        # Generate semantic feedback
+        semantic_result = analyzer.generate_semantic_feedback(
+            req.question_text, 
+            req.user_answer, 
+            req.sample_solution
+        )
+        
+        return FeedbackResponse(
+            feedback=semantic_result.get("feedback", "Semantic analysis completed"),
+            strengths=semantic_result.get("strengths", []),
+            weaknesses=semantic_result.get("weaknesses", []),
+            suggestions=semantic_result.get("suggestions", []),
+            score=semantic_result.get("score", 50.0),
+            model_used=semantic_result.get("model_used", "semantic_analyzer"),
+            timestamp=datetime.datetime.now().isoformat()
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error generating semantic feedback: {str(e)}")
+        
+        # Fallback response in case of error
+        return FeedbackResponse(
+            feedback=f"Semantic analysis service encountered an error: {str(e)}",
+            strengths=["Provided an answer"],
+            weaknesses=["Analysis unavailable"],
+            suggestions=["Please try again later"],
+            score=50.0,
+            model_used="semantic_analyzer_fallback",
+            timestamp=datetime.datetime.now().isoformat()
+        )
+
+
 @app.get("/")
 async def root():
     """Root endpoint with service information."""
@@ -394,6 +479,7 @@ async def root():
             "health": "/health",
             "feedback": "/feedback",
             "advanced_feedback": "/feedback/advanced",
+            "semantic_feedback": "/feedback/semantic",
             "docs": "/docs"
         }
     }

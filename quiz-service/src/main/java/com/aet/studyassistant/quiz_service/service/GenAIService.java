@@ -104,6 +104,43 @@ public class GenAIService {
     }
     
     /**
+     * Generate semantic similarity feedback without using generative AI
+     */
+    public Map<String, Object> generateSemanticFeedback(String questionText, String userAnswer, String sampleSolution) {
+        try {
+            Map<String, String> requestBody = new HashMap<>();
+            requestBody.put("question_text", questionText);
+            requestBody.put("user_answer", userAnswer);
+            requestBody.put("sample_solution", sampleSolution);
+            
+            String response = webClient.post()
+                    .uri(genaiServiceUrl + "/feedback/semantic")
+                    .header("Content-Type", "application/json")
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(Duration.ofSeconds(30))
+                    .block();
+            
+            return objectMapper.readValue(response, Map.class);
+            
+        } catch (Exception e) {
+            // Fallback response in case of error
+            Map<String, Object> fallbackResponse = new HashMap<>();
+            fallbackResponse.put("feedback", "Semantic analysis service is currently unavailable. Please try again later.");
+            fallbackResponse.put("strengths", new String[]{});
+            fallbackResponse.put("weaknesses", new String[]{});
+            fallbackResponse.put("suggestions", new String[]{});
+            fallbackResponse.put("score", 50.0);
+            fallbackResponse.put("model_used", "semantic_analyzer_fallback");
+            fallbackResponse.put("timestamp", java.time.LocalDateTime.now().toString());
+            fallbackResponse.put("error", "Semantic analysis service error: " + e.getMessage());
+            
+            return fallbackResponse;
+        }
+    }
+    
+    /**
      * Check if the GenAI service is available
      */
     public boolean isGenAIServiceAvailable() {
