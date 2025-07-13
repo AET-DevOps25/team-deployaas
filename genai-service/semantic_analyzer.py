@@ -7,7 +7,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import re
 import logging
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Any
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,7 @@ class SemanticAnalyzer:
         text = re.sub(r'[^\w\s\-\']', ' ', text)
         
         return text    
+        
     def extract_key_concepts(self, text: str) -> List[str]:
         """Extract key concepts from text (simplified approach)"""
         # This is a basic implementation - could be enhanced with NER
@@ -77,7 +79,10 @@ class SemanticAnalyzer:
                      'from', 'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 
                      'that', 'the', 'to', 'was', 'were', 'will', 'with', 'this',
                      'they', 'them', 'these', 'those', 'can', 'could', 'should',
-                     'would', 'may', 'might', 'must'}
+                     'would', 'may', 'might', 'must', 'have', 'had', 'do', 'does',
+                     'did', 'get', 'got', 'make', 'made', 'take', 'took', 'go',
+                     'went', 'come', 'came', 'see', 'saw', 'know', 'knew', 'think',
+                     'thought', 'say', 'said', 'tell', 'told', 'give', 'gave'}
         
         key_concepts = [word for word in words 
                        if len(word) > 2 and word not in stop_words]
@@ -102,7 +107,7 @@ class SemanticAnalyzer:
         
         return covered, missing
     
-    def generate_semantic_feedback(self, question_text: str, user_answer: str, sample_solution: str) -> dict:
+    def generate_semantic_feedback(self, question_text: str, user_answer: str, sample_solution: str) -> Dict[str, Any]:
         """
         Generate structured feedback using semantic similarity analysis
         
@@ -116,51 +121,96 @@ class SemanticAnalyzer:
             # Analyze concept coverage
             covered, missing = self.analyze_coverage(user_answer, sample_solution)
             
+            # Convert similarity to score out of 100
+            score = similarity * 100
+            
             # Generate feedback based on similarity score
             if similarity >= 0.8:
-                feedback = f"Excellent semantic match ({similarity:.2f}). Your answer aligns very well with the expected solution."
+                feedback = f"Excellent semantic match (similarity: {similarity:.3f}). Your answer aligns very well with the expected solution and demonstrates strong understanding of the key concepts."
             elif similarity >= 0.6:
-                feedback = f"Good semantic match ({similarity:.2f}). Your answer covers the main concepts well."
+                feedback = f"Good semantic match (similarity: {similarity:.3f}). Your answer covers the main concepts well and shows solid understanding."
             elif similarity >= 0.4:
-                feedback = f"Moderate semantic match ({similarity:.2f}). Your answer addresses some key points."
+                feedback = f"Moderate semantic match (similarity: {similarity:.3f}). Your answer addresses some key points but could be more comprehensive."
             else:
-                feedback = f"Low semantic match ({similarity:.2f}). Your answer differs significantly from the expected solution."
+                feedback = f"Low semantic match (similarity: {similarity:.3f}). Your answer differs significantly from the expected solution. Consider reviewing the key concepts."
             
             # Generate structured components
             strengths = []
             if covered:
-                strengths.append(f"Covered key concepts: {', '.join(covered[:3])}")
-            if similarity >= 0.6:
-                strengths.append("Good conceptual understanding demonstrated")
+                if len(covered) <= 3:
+                    strengths.append(f"Successfully covered key concepts: {', '.join(covered)}")
+                else:
+                    strengths.append(f"Successfully covered key concepts: {', '.join(covered[:3])} and {len(covered)-3} more")
+            
+            if similarity >= 0.7:
+                strengths.append("Strong conceptual understanding demonstrated")
+            elif similarity >= 0.5:
+                strengths.append("Good foundational understanding shown")
+            
+            if len(user_answer.strip()) > 50:  # Substantial answer
+                strengths.append("Provided a detailed response")
+            
             if not strengths:
                 strengths.append("Attempted to answer the question")
             
             weaknesses = []
             if missing:
-                weaknesses.append(f"Missing concepts: {', '.join(missing[:3])}")
-            if similarity < 0.6:
-                weaknesses.append("Could be more comprehensive")
+                if len(missing) <= 3:
+                    weaknesses.append(f"Missing important concepts: {', '.join(missing)}")
+                else:
+                    weaknesses.append(f"Missing important concepts: {', '.join(missing[:3])} and {len(missing)-3} more")
             
-            suggestions = [
-                "Review the sample solution for completeness",
-                "Focus on incorporating key concepts",
-                "Practice explaining concepts in your own words"
-            ]
+            if similarity < 0.5:
+                weaknesses.append("Answer could be more aligned with expected solution")
+            
+            if similarity < 0.3:
+                weaknesses.append("May need to review fundamental concepts")
+            
+            suggestions = []
+            if missing:
+                suggestions.append("Review the missing concepts to strengthen your understanding")
+            if similarity < 0.6:
+                suggestions.append("Focus on incorporating more key concepts from the topic")
+            if len(covered) > 0 and len(missing) > len(covered):
+                suggestions.append("Build upon the concepts you've correctly identified")
+            
+            suggestions.append("Practice explaining concepts in your own words")
             
             return {
                 "feedback": feedback,
                 "suggestions": suggestions,
                 "strengths": strengths,
                 "weaknesses": weaknesses,
-                "similarity_score": similarity
+                "score": round(score, 1),
+                "similarity_score": round(similarity, 3),
+                "model_used": "semantic_analyzer",
+                "timestamp": "",  # Will be set by the main service
+                "covered_concepts": covered,
+                "missing_concepts": missing
             }
             
         except Exception as e:
             logger.error(f"Error generating semantic feedback: {e}")
             return {
-                "feedback": "Unable to analyze similarity",
-                "suggestions": ["Try again later"],
+                "feedback": f"Unable to perform semantic analysis due to technical error: {str(e)}",
+                "suggestions": ["Please try again later", "Check your internet connection"],
                 "strengths": ["Provided an answer"],
-                "weaknesses": ["Analysis unavailable"],
-                "similarity_score": 0.5
+                "weaknesses": ["Analysis unavailable due to technical issues"],
+                "score": 50.0,
+                "similarity_score": 0.5,
+                "model_used": "semantic_analyzer_fallback",
+                "timestamp": "",
+                "covered_concepts": [],
+                "missing_concepts": []
             }
+
+
+# Global instance to reuse the model
+_semantic_analyzer = None
+
+def get_semantic_analyzer() -> SemanticAnalyzer:
+    """Get or create semantic analyzer instance"""
+    global _semantic_analyzer
+    if _semantic_analyzer is None:
+        _semantic_analyzer = SemanticAnalyzer()
+    return _semantic_analyzer
