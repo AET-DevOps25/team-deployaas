@@ -20,7 +20,8 @@ FROM eclipse-temurin:24-jre
 WORKDIR /app
 
 # Copy built JAR from the builder stage
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder /app/build/libs/ ./libs/
+RUN find ./libs -name "*.jar" -not -name "*-plain.jar" -exec cp {} app.jar \;
 
 # Expose the port your service runs on
 EXPOSE 8083
