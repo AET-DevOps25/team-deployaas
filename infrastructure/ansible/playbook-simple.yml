@@ -39,6 +39,17 @@
         append: yes
         create_home: yes
 
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Restart Docker service to apply group changes
+      systemd:
+        name: docker
+        state: restarted
+
     - name: Test Docker installation
       command: docker --version
       register: docker_version

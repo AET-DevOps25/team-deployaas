@@ -165,6 +165,12 @@ resource "aws_instance" "myapp-server" {
   vpc_security_group_ids      = [aws_security_group.myapp-sg.id]
   availability_zone           = var.avail_zone
 
+  root_block_device {
+    volume_type = "gp3"
+    volume_size = 20
+    encrypted   = true
+  }
+
   tags = {
     Name = "${var.env_prefix}-server"
   }

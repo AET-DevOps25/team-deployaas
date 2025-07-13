@@ -5,7 +5,7 @@ env_prefix          = "devops"
 instance_type       = "t3.medium"
 
 # Replace with your actual IP (with /32 suffix)
-my_ip = "131.159.221.85/32"
+my_ip = "88.217.180.70/32"
 
 # Update to your actual key paths
 
