@@ -28,9 +28,17 @@ import Progress from "../views/progress/Index.vue";
 import Quizzes from "../views/quizzes/Index.vue";
 import Quiz from "../views/quiz/Index.vue";
 
+// Auth pages 
+import RegisterPage from "../views/RegisterPage.vue";
+import LoginPage from "../views/LoginPage.vue";
+
 const routes = [
   // landing
   { path: "/", component: LandingPage },
+
+  // auth (new)
+  { path: "/register", component: RegisterPage },
+  { path: "/login", component: LoginPage },
 
   // home (for authenticated users)
   { path: "/home", component: HomePage },
