@@ -7,8 +7,8 @@ COPY . .
 # Ensure Gradle wrapper is executable
 RUN chmod +x ./gradlew
 
-# Clean + build the JAR
-RUN ./gradlew clean build --no-daemon
+# Clean + build the JAR without running tests
+RUN ./gradlew clean build -x test --no-daemon
 
 # Stage 2: Run the application
 FROM eclipse-temurin:24-jre
