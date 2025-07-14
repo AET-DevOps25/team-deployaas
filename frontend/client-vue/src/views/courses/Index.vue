@@ -48,7 +48,7 @@ function difficultyBadge(level) {
 // ✅ fetch with token
 onMounted(async () => {
   try {
-    const res = await api.get("/quiz/courses"); // ✅ your Nginx routes /api/courses → /api/quiz/courses
+    const res = await api.get("/courses"); // ✅ your Nginx routes /api/courses → /api/quiz/courses
     courses.value = res.data;
   } catch (e) {
     console.error("Failed to load courses:", e);

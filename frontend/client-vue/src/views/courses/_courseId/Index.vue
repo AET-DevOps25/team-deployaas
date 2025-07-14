@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import api from "../../../utils/api.js"; // ✅ import your Axios instance
+import axios from "../../../utils/api.js"; // 👈 assuming this is your axios instance
 import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
@@ -10,16 +10,24 @@ import {
 const route = useRoute();
 const router = useRouter();
 
+// State
 const course = ref({});
 const chapters = ref([]);
 const loading = ref(true);
 
-const cameFromHome = computed(() =>
-  router.options.history.state?.back === "/home" || document.referrer.includes("/home")
-);
+// Computed properties for navigation
+const cameFromHome = computed(() => {
+  return (
+    router.options.history.state?.back === "/home" ||
+    document.referrer.includes("/home")
+  );
+});
 
-const backButtonText = computed(() => (cameFromHome.value ? "Back to Home" : "Back to Courses"));
+const backButtonText = computed(() => {
+  return cameFromHome.value ? "Back to Home" : "Back to Courses";
+});
 
+// Methods
 const goBack = () => {
   router.push(cameFromHome.value ? "/home" : "/courses");
 };
@@ -30,25 +38,30 @@ const startChapterQuiz = (chapterId) => {
 
 const difficultyBadge = (level) => {
   switch (level) {
-    case "Beginner": return "badge badge-success";
-    case "Intermediate": return "badge badge-warning";
-    case "Advanced": return "badge badge-error";
-    default: return "badge badge-outline";
+    case "Beginner":
+      return "badge badge-success";
+    case "Intermediate":
+      return "badge badge-warning";
+    case "Advanced":
+      return "badge badge-error";
+    default:
+      return "badge badge-outline";
   }
 };
 
+// Fetch data
 onMounted(async () => {
   const courseId = route.params.courseId;
+  loading.value = true;
 
   try {
-    // ✅ fetch all courses
-    const courseRes = await api.get("/quiz/courses");
-    const allCourses = courseRes.data;
+    const { data: allCourses } = await axios.get("/courses"); // 👈 uses token automatically
 
     const foundCourse = allCourses.find((c) => c.id === courseId);
     if (foundCourse) {
       course.value = foundCourse;
     } else {
+      console.warn(`Course with ID ${courseId} not found`);
       course.value = {
         id: courseId,
         title: "Course Not Found",
@@ -58,20 +71,23 @@ onMounted(async () => {
       };
     }
 
-    // ✅ fetch chapters for selected course
-    const chaptersRes = await api.get(`/quiz/courses/${courseId}/chapters`);
-    chapters.value = chaptersRes.data;
+    const { data: chapterList } = await axios.get(`/quiz/courses/${courseId}/chapters`);
+    chapters.value = chapterList;
 
-    // ✅ enrich each chapter with question count
-    for (let chapter of chapters.value) {
-      try {
-        const questionsRes = await api.get(`/quiz/chapters/${chapter.id}/questions`);
-        chapter.questionCount = questionsRes.data.length;
-      } catch (err) {
-        console.warn(`Failed to fetch questions for chapter ${chapter.id}:`, err);
-        chapter.questionCount = 0;
-      }
-    }
+    // Fetch question counts
+    await Promise.all(
+      chapters.value.map(async (chapter) => {
+        try {
+          const { data: questions } = await axios.get(
+            `/quiz/chapters/${chapter.id}/questions`
+          );
+          chapter.questionCount = questions.length;
+        } catch (err) {
+          console.error(`Error fetching questions for chapter ${chapter.id}:`, err);
+          chapter.questionCount = 0;
+        }
+      })
+    );
   } catch (err) {
     console.error("Error loading course or chapters:", err);
   } finally {
