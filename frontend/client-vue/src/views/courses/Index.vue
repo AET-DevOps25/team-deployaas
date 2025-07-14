@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { RouterLink } from "vue-router";
-import api from "../../utils/api.js"; // ✅ axios instance with token
+import api from "../../utils/api.js"; // axios instance with token
 
 import {
   BookOpen as BookOpenIcon,
@@ -45,7 +45,7 @@ function difficultyBadge(level) {
   }
 }
 
-// ✅ fetch with token
+// fetch with token
 onMounted(async () => {
   try {
     const res = await api.get("/courses"); // ✅ your Nginx routes /api/courses → /api/quiz/courses

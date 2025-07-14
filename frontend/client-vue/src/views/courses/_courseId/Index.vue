@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import axios from "../../../utils/api.js"; // 👈 assuming this is your axios instance
+import axios from "../../../utils/api.js"; // axios instance
 import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
@@ -55,7 +55,7 @@ onMounted(async () => {
   loading.value = true;
 
   try {
-    const { data: allCourses } = await axios.get("/courses"); // 👈 uses token automatically
+    const { data: allCourses } = await axios.get("/courses"); // uses token automatically
 
     const foundCourse = allCourses.find((c) => c.id === courseId);
     if (foundCourse) {
