@@ -1,0 +1,88 @@
+# Values file for development environment
+# Copy this file and modify for different environments
+
+# Use this for local development or testing
+namespace: team-deployaas
+
+image:
+  registry: ghcr.io
+  repository: aet-devops25/team-deployaas
+  tag: dev  # Use dev tag for development
+  pullPolicy: Always
+
+# Development configuration
+config:
+  environment: development
+  frontendOrigin: https://study-assistant-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+  
+  # Service URLs for dev environment
+  authServiceUrl: https://auth-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+  quizServiceUrl: https://quiz-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+  flashcardServiceUrl: https://flashcard-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+
+# Reduced resources for development
+services:
+  authService:
+    enabled: true
+    replicas: 1  # Single replica for dev
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 256Mi
+        cpu: 250m
+  
+  quizService:
+    enabled: true
+    replicas: 1
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 256Mi
+        cpu: 250m
+  
+  flashcardService:
+    enabled: true
+    replicas: 1
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 256Mi
+        cpu: 250m
+  
+  client:
+    enabled: true
+    replicas: 1
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 128Mi
+        cpu: 100m
+  
+  genaiService:
+    enabled: true
+    replicas: 1
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+# Ingress for dev environment
+ingress:
+  enabled: true
+  hosts:
+    main: study-assistant-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+    auth: auth-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+    quiz: quiz-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+    flashcard: flashcard-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+    pgadmin: pgadmin-dev.devops25-team-deployaas.rancher.ase.cit.tum.de

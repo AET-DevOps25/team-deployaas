@@ -1,0 +1,102 @@
+{{- if .Values.pgadmin.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-pgadmin
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pgadmin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "study-assistant.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: pgadmin
+  template:
+    metadata:
+      labels:
+        {{- include "study-assistant.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: pgadmin
+    spec:
+      automountServiceAccountToken: {{ not .Values.security.automountServiceAccountToken }}
+      containers:
+      - name: pgadmin
+        image: "{{ .Values.pgadmin.image.repository }}:{{ .Values.pgadmin.image.tag }}"
+        imagePullPolicy: {{ .Values.pgadmin.image.pullPolicy }}
+        ports:
+        - containerPort: 80
+        env:
+        - name: PGADMIN_DEFAULT_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: PGADMIN_DEFAULT_EMAIL
+        - name: PGADMIN_DEFAULT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: PGADMIN_DEFAULT_PASSWORD
+        - name: PGADMIN_SERVER_JSON_FILE
+          value: "/pgadmin4/servers.json"
+        volumeMounts:
+        - name: pgadmin-servers
+          mountPath: /pgadmin4/servers.json
+          subPath: servers.json
+          readOnly: true
+        resources:
+          {{- toYaml .Values.pgadmin.resources | nindent 10 }}
+      volumes:
+      - name: pgadmin-servers
+        configMap:
+          name: {{ include "study-assistant.fullname" . }}-pgadmin-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-pgadmin
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pgadmin
+spec:
+  selector:
+    {{- include "study-assistant.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: pgadmin
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-pgadmin-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+data:
+  servers.json: |
+    {
+      "Servers": {
+        "1": {
+          "Name": "Study Assistant Database",
+          "Group": "Servers",
+          "Host": "{{ include "study-assistant.fullname" . }}-postgres",
+          "Port": 5432,
+          "MaintenanceDB": "{{ .Values.database.credentials.database }}",
+          "Username": "{{ .Values.database.credentials.username }}",
+          "SSLMode": "prefer",
+          "SSLCert": "<STORAGE_DIR>/.postgresql/postgresql.crt",
+          "SSLKey": "<STORAGE_DIR>/.postgresql/postgresql.key",
+          "SSLCompression": 0,
+          "Timeout": 10,
+          "UseSSHTunnel": 0,
+          "TunnelPort": "22",
+          "TunnelAuthentication": 0
+        }
+      }
+    }
+{{- end }}

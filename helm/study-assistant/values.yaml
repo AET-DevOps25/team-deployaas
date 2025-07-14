@@ -1,7 +1,7 @@
 # Default values for study-assistant.
 # This is a YAML-formatted file.
 
-namespace: devops25-team-deployaas
+namespace: dev
 
 image:
   registry: ghcr.io
@@ -12,12 +12,12 @@ image:
 # Application configuration
 config:
   environment: k8s
-  frontendOrigin: https://study-assistant.devops25-team-deployaas.rancher.ase.cit.tum.de
+  frontendOrigin: https://study-assistant-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
   
   # Service URLs
-  authServiceUrl: https://auth.devops25-team-deployaas.rancher.ase.cit.tum.de
-  quizServiceUrl: https://quiz.devops25-team-deployaas.rancher.ase.cit.tum.de
-  flashcardServiceUrl: https://flashcard.devops25-team-deployaas.rancher.ase.cit.tum.de
+  authServiceUrl: https://auth-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+  quizServiceUrl: https://quiz-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+  flashcardServiceUrl: https://flashcard-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
 
 # Database configuration
 database:
@@ -49,7 +49,7 @@ database:
 services:
   authService:
     enabled: true
-    replicas: 2
+    replicas: 1
     port: 8083
     image: auth-service
     resources:
@@ -64,7 +64,7 @@ services:
   
   quizService:
     enabled: true
-    replicas: 2
+    replicas: 1
     port: 8081
     image: quiz-service
     resources:
@@ -79,7 +79,7 @@ services:
   
   flashcardService:
     enabled: true
-    replicas: 2
+    replicas: 1
     port: 8082
     image: flashcard-service
     resources:
@@ -94,8 +94,8 @@ services:
   
   client:
     enabled: true
-    replicas: 3
-    port: 3000
+    replicas: 1
+    port: 80
     image: client
     resources:
       requests:
@@ -106,6 +106,21 @@ services:
         memory: 256Mi
         cpu: 200m
         ephemeral-storage: 1Gi
+  
+  genaiService:
+    enabled: true
+    replicas: 1
+    port: 5001
+    image: genai-service
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 500m
+        ephemeral-storage: 1Gi
+      limits:
+        memory: 1Gi
+        cpu: 1000m
+        ephemeral-storage: 2Gi
 
 # pgAdmin configuration
 pgadmin:
@@ -144,11 +159,11 @@ ingress:
     nginx.ingress.kubernetes.io/enable-cors: "true"
   
   hosts:
-    main: study-assistant.devops25-team-deployaas.rancher.ase.cit.tum.de
-    auth: auth.devops25-team-deployaas.rancher.ase.cit.tum.de
-    quiz: quiz.devops25-team-deployaas.rancher.ase.cit.tum.de
-    flashcard: flashcard.devops25-team-deployaas.rancher.ase.cit.tum.de
-    pgadmin: pgadmin.devops25-team-deployaas.rancher.ase.cit.tum.de
+    main: study-assistant-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+    auth: auth-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+    quiz: quiz-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+    flashcard: flashcard-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
+    pgadmin: pgadmin-dev.devops25-team-deployaas.rancher.ase.cit.tum.de
   
   tls:
     enabled: true

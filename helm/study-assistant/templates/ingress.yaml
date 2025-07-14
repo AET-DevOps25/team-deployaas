@@ -1,0 +1,83 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-ingress
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+  - hosts:
+    - {{ .Values.ingress.hosts.main }}
+    - {{ .Values.ingress.hosts.auth }}
+    - {{ .Values.ingress.hosts.quiz }}
+    - {{ .Values.ingress.hosts.flashcard }}
+    - {{ .Values.ingress.hosts.pgadmin }}
+    secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+  # Main application (client)
+  - host: {{ .Values.ingress.hosts.main }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "study-assistant.fullname" . }}-client
+            port:
+              number: {{ .Values.services.client.port }}
+  
+  # Auth service
+  - host: {{ .Values.ingress.hosts.auth }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "study-assistant.fullname" . }}-auth-service
+            port:
+              number: {{ .Values.services.authService.port }}
+  
+  # Quiz service
+  - host: {{ .Values.ingress.hosts.quiz }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "study-assistant.fullname" . }}-quiz-service
+            port:
+              number: {{ .Values.services.quizService.port }}
+  
+  # Flashcard service
+  - host: {{ .Values.ingress.hosts.flashcard }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "study-assistant.fullname" . }}-flashcard-service
+            port:
+              number: {{ .Values.services.flashcardService.port }}
+  
+  # pgAdmin
+  - host: {{ .Values.ingress.hosts.pgadmin }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "study-assistant.fullname" . }}-pgadmin
+            port:
+              number: 80
+{{- end }}
