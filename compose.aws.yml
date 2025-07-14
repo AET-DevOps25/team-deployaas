@@ -79,11 +79,14 @@ services:
       - .env.prod
     depends_on:
       - db
+      - genai-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - GENAI_SERVICE_URL=http://genai-service:5001
+
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
@@ -118,6 +121,24 @@ services:
     networks:
       - traefik
 
+  genai-service:
+    image: ghcr.io/aet-devops25/team-deployaas/genai-service:latest
+    container_name: studyapp_genai_service
+    env_file:
+      - .env.prod
+    environment:
+      - WEBUI_API_KEY=${WEBUI_API_KEY}
+      - PORT=5001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+    restart: always
+    networks:
+      - traefik
+
   client:
     image: ghcr.io/aet-devops25/team-deployaas/client:latest
     container_name: studyapp_client
@@ -127,6 +148,7 @@ services:
       - auth-service
       - quiz-service
       - flashcard-service
+      - genai-service
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
