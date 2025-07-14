@@ -146,6 +146,7 @@ import {
   Cpu as CpuIcon,
   Settings as SettingsIcon,
 } from "lucide-vue-next";
+import api from '../utils/api.js';
 
 const router = useRouter();
 const courses = ref([]);
@@ -196,8 +197,8 @@ function difficultyBadge(level) {
 
 onMounted(async () => {
   try {
-    const res = await fetch("/api/courses");
-    courses.value = await res.json();
+    const res = await api.get('/courses');
+    courses.value = res.data;
   } catch (e) {
     console.error("Failed to load courses:", e);
   } finally {
