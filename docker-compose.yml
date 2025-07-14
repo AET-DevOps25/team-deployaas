@@ -36,10 +36,12 @@ services:
       - "8081:8081"
     depends_on:
       - db
+      - genai-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - GENAI_SERVICE_URL=http://genai-service:5001
 
   flashcard-service:
     build: ./flashcard-service
@@ -67,6 +69,22 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
 
+  genai-service:
+    build: ./genai-service
+    container_name: studyapp_genai_service
+    restart: always
+    ports:
+      - "5001:5001"
+    environment:
+      - WEBUI_API_KEY=${WEBUI_API_KEY}
+      - PORT=5001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
   client:
     build:
       context: ./frontend/client-vue
@@ -78,6 +96,7 @@ services:
       - auth-service
       - quiz-service
       - flashcard-service
+      - genai-service
 
 volumes:
   pgdata:
