@@ -6,19 +6,37 @@
         <BookOpenIcon class="w-8 h-8 text-primary" />
         <span class="text-2xl font-bold ml-2">Study Assistant</span>
       </div>
+
       <div class="hidden md:flex gap-6 pr-6">
         <RouterLink to="/home" class="btn btn-ghost">Home</RouterLink>
         <RouterLink to="/courses" class="btn btn-ghost">Courses</RouterLink>
         <RouterLink to="/progress" class="btn btn-ghost">Progress</RouterLink>
       </div>
+
       <div class="flex-none">
-        <button class="btn btn-primary">Profile</button>
+
+        <template v-if="isAuthenticated">
+          <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-neutral">
+              {{ userEmail }}
+              <svg class="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </label>
+            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40">
+              <li><a @click.prevent="logout">Logout</a></li>
+            </ul>
+          </div>
+        </template>
+
+        <template v-else>
+          <RouterLink to="/login" class="btn btn-primary">Login</RouterLink>
+        </template>
       </div>
     </nav>
 
     <!-- Main Content -->
     <div class="flex-1 container mx-auto py-8">
-      <!-- Welcome Section -->
       <div class="text-center mb-12">
         <h1 class="text-4xl font-bold mb-4">Welcome Back!</h1>
         <p class="text-lg text-base-content/70">
@@ -26,86 +44,46 @@
         </p>
       </div>
 
-      <!-- Available Courses -->
+      <!-- Courses -->
       <section class="mb-16">
         <div class="flex items-center justify-between mb-8">
           <h2 class="text-3xl font-semibold">Your Courses</h2>
-          <RouterLink to="/courses" class="btn btn-outline">
-            View All Courses
-          </RouterLink>
+          <RouterLink to="/courses" class="btn btn-outline">View All Courses</RouterLink>
         </div>
 
-        <!-- Loading state -->
         <div v-if="loading" class="text-center py-16">
           <div class="loading loading-spinner loading-lg"></div>
           <p class="mt-4">Loading courses...</p>
         </div>
 
-        <!-- Empty state -->
         <div v-else-if="!courses.length" class="text-center py-16">
           <p class="text-base-content/70 mb-4">No courses available yet.</p>
-          <RouterLink to="/courses" class="btn btn-primary">
-            Explore Courses
-          </RouterLink>
+          <RouterLink to="/courses" class="btn btn-primary">Explore Courses</RouterLink>
         </div>
 
-        <!-- Courses grid -->
-        <div
-          v-else
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          <div
-            v-for="course in courses"
-            :key="course.id"
-            class="card bg-base-100 shadow hover:shadow-lg transition"
-          >
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div v-for="course in courses" :key="course.id" class="card bg-base-100 shadow hover:shadow-lg transition">
             <div class="card-body">
-              <!-- Icon + difficulty badge -->
               <div class="flex justify-between items-start">
-                <component
-                  :is="iconMap[course.iconKey] || DefaultIcon"
-                  class="w-8 h-8 text-purple-600"
-                />
+                <component :is="iconMap[course.iconKey] || DefaultIcon" class="w-8 h-8 text-purple-600" />
                 <span :class="difficultyBadge(course.difficulty)">
                   {{ course.difficulty }}
                 </span>
               </div>
-
-              <!-- Title + description -->
               <h2 class="card-title mt-2">{{ course.title }}</h2>
               <p class="text-base-content/70">{{ course.description }}</p>
-
-              <!-- chapters / time -->
-              <div
-                class="mt-4 flex justify-between text-sm text-base-content/70"
-              >
+              <div class="mt-4 flex justify-between text-sm text-base-content/70">
                 <span>{{ course.chapters }} chapters</span>
                 <span>{{ course.estimatedTime }}</span>
               </div>
-
-              <!-- tags -->
               <div class="mt-4 flex flex-wrap gap-2">
-                <span
-                  v-for="tag in course.tags.slice(0, 3)"
-                  :key="tag"
-                  class="badge badge-outline badge-sm"
-                >
-                  {{ tag }}
-                </span>
-                <span
-                  v-if="course.tags.length > 3"
-                  class="badge badge-outline badge-sm"
-                >
+                <span v-for="tag in course.tags.slice(0, 3)" :key="tag" class="badge badge-outline badge-sm">{{ tag }}</span>
+                <span v-if="course.tags.length > 3" class="badge badge-outline badge-sm">
                   +{{ course.tags.length - 3 }}
                 </span>
               </div>
-
-              <!-- Continue/Start button -->
               <div class="mt-6">
-                <RouterLink
-                  :to="`/courses/${course.id}`"
-                  class="btn bg-black text-white border-black hover:bg-gray-800 btn-block"
-                >
+                <RouterLink :to="`/courses/${course.id}`" class="btn bg-black text-white border-black hover:bg-gray-800 btn-block">
                   Continue Course
                 </RouterLink>
               </div>
@@ -118,41 +96,25 @@
       <section class="mb-16">
         <h2 class="text-2xl font-semibold mb-6">Quick Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <RouterLink
-            to="/progress"
-            class="card bg-base-100 shadow hover:shadow-lg transition"
-          >
+          <RouterLink to="/progress" class="card bg-base-100 shadow hover:shadow-lg transition">
             <div class="card-body text-center">
               <TargetIcon class="mx-auto w-12 h-12 text-primary mb-2" />
               <h3 class="text-lg font-semibold">View Progress</h3>
-              <p class="text-sm text-base-content/70">
-                Track your learning journey
-              </p>
+              <p class="text-sm text-base-content/70">Track your learning journey</p>
             </div>
           </RouterLink>
-
-          <div
-            class="card bg-base-100 shadow hover:shadow-lg transition opacity-60"
-          >
+          <div class="card bg-base-100 shadow hover:shadow-lg transition opacity-60">
             <div class="card-body text-center">
               <SettingsIcon class="mx-auto w-12 h-12 text-primary mb-2" />
               <h3 class="text-lg font-semibold">Placeholder Action</h3>
-              <p class="text-sm text-base-content/70">
-                Placeholder to be used for future features
-              </p>
+              <p class="text-sm text-base-content/70">Placeholder to be used for future features</p>
             </div>
           </div>
-
-          <RouterLink
-            to="/flashcards"
-            class="card bg-base-100 shadow hover:shadow-lg transition"
-          >
+          <RouterLink to="/flashcards" class="card bg-base-100 shadow hover:shadow-lg transition">
             <div class="card-body text-center">
               <BrainIcon class="mx-auto w-12 h-12 text-primary mb-2" />
               <h3 class="text-lg font-semibold">Flashcards</h3>
-              <p class="text-sm text-base-content/70">
-                Review with spaced repetition
-              </p>
+              <p class="text-sm text-base-content/70">Review with spaced repetition</p>
             </div>
           </RouterLink>
         </div>
@@ -169,8 +131,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { RouterLink } from "vue-router";
+import { ref, onMounted, computed } from "vue";
+import { useRouter, RouterLink } from "vue-router";
 import {
   BookOpen as BookOpenIcon,
   Brain as BrainIcon,
@@ -185,11 +147,28 @@ import {
   Settings as SettingsIcon,
 } from "lucide-vue-next";
 
-// State
+const router = useRouter();
 const courses = ref([]);
 const loading = ref(true);
 
-// Icon mapping
+const isAuthenticated = computed(() => !!localStorage.getItem("token"));
+
+const userEmail = computed(() => {
+  const token = localStorage.getItem("token");
+  if (!token) return "User";
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.sub || "User";
+  } catch {
+    return "User";
+  }
+});
+
+function logout() {
+  localStorage.removeItem("token");
+  router.push("/");
+}
+
 const iconMap = {
   code: CodeIcon,
   database: DatabaseIcon,
@@ -202,7 +181,6 @@ const iconMap = {
 };
 const DefaultIcon = CodeIcon;
 
-// Difficulty badge styling
 function difficultyBadge(level) {
   switch (level) {
     case "Beginner":
@@ -216,7 +194,6 @@ function difficultyBadge(level) {
   }
 }
 
-// Fetch courses on mount
 onMounted(async () => {
   try {
     const res = await fetch("/api/courses");

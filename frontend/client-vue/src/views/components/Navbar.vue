@@ -9,8 +9,9 @@
       <RouterLink to="/" class="btn btn-ghost"> Back to Landing Page</RouterLink>
     </div>
     <div class="flex-none">
-      <RouterLink to="/login" class="btn btn-outline btn-neutral">Sign In</RouterLink>
-      <RouterLink to="/register" class="btn btn-neutral ml-2">Sign Up</RouterLink>
+      <RouterLink v-if="!isLoggedIn" to="/login" class="btn">Login</RouterLink>
+      <RouterLink v-if="!isLoggedIn" to="/register" class="btn btn-primary">Sign Up</RouterLink>
+      <button v-if="isLoggedIn" @click="logout" class="btn btn-outline">Logout</button>
     </div>
   </nav>
 </template>
@@ -18,4 +19,13 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import { BookOpen as BookOpenIcon } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const isLoggedIn = !!localStorage.getItem("token");
+
+function logout() {
+  localStorage.removeItem("token");
+  router.push("/login");
+}
 </script>
