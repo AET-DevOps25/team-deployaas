@@ -16,7 +16,7 @@ RUN chmod +x gradlew && ./gradlew --no-daemon build -x test || true
 # Now copy the full project
 COPY . .
 
-# Build the application (will reuse downloaded Gradle distribution)
+# Clean + build the JAR without running tests
 RUN ./gradlew clean build -x test --no-daemon
 
 # ---- Stage 2: Create a minimal runtime image ----

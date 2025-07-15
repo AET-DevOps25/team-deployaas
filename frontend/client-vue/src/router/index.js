@@ -24,6 +24,8 @@ import ChapterResults from "../views/chapters/_id/Results.vue";
 
 // Flashcards
 import Flashcards from "../views/flashcards/Index.vue";
+import FlashcardDeck from "../views/flashcards/deck/Index.vue";
+import FlashcardReview from "../views/flashcards/deck/Review.vue";
 import Generated from "../views/flashcards/generated/Index.vue";
 import Loading from "../views/flashcards/generated/Loading.vue";
 
@@ -71,15 +73,14 @@ const routes = [
       },
     ],
   },
-  {
-    path: "/flashcards",
-    component: Flashcards,
-    meta: { requiresAuth: true },
-    children: [
-      { path: "generated", component: Generated },
-      { path: "generated/loading", component: Loading },
-    ],
-  },
+
+  // flashcards
+  { path: "/flashcards", component: Flashcards, meta: { requiresAuth: true } },
+  { path: "/flashcards/deck/:deckId", component: FlashcardDeck, meta: { requiresAuth: true } },
+  { path: "/flashcards/deck/:deckId/review", component: FlashcardReview, meta: { requiresAuth: true } },
+  { path: "/flashcards/generated", component: Generated, meta: { requiresAuth: true } },
+  { path: "/flashcards/generated/loading", component: Loading, meta: { requiresAuth: true } },
+
   { path: "/progress", component: Progress, meta: { requiresAuth: true } },
   { path: "/quizzes", component: Quizzes, meta: { requiresAuth: true } },
 
