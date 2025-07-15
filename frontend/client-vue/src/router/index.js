@@ -20,6 +20,8 @@ import ChapterResults from "../views/chapters/_id/Results.vue";
 
 // Flashcards
 import Flashcards from "../views/flashcards/Index.vue";
+import FlashcardDeck from "../views/flashcards/deck/Index.vue";
+import FlashcardReview from "../views/flashcards/deck/Review.vue";
 import Generated from "../views/flashcards/generated/Index.vue";
 import Loading from "../views/flashcards/generated/Loading.vue";
 
@@ -61,14 +63,11 @@ const routes = [
   },
 
   // flashcards
-  {
-    path: "/flashcards",
-    component: Flashcards,
-    children: [
-      { path: "generated", component: Generated },
-      { path: "generated/loading", component: Loading },
-    ],
-  },
+  { path: "/flashcards", component: Flashcards },
+  { path: "/flashcards/deck/:deckId", component: FlashcardDeck },
+  { path: "/flashcards/deck/:deckId/review", component: FlashcardReview },
+  { path: "/flashcards/generated", component: Generated },
+  { path: "/flashcards/generated/loading", component: Loading },
 
   // progress & quizzes
   { path: "/progress", component: Progress },

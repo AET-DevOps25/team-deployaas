@@ -1,0 +1,67 @@
+---
+- name: Install Docker and basic setup
+  hosts: all
+  become: yes
+  gather_facts: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Update system packages
+      yum:
+        name: '*'
+        state: latest
+        update_cache: true
+
+    - name: Install required system packages
+      yum:
+        name:
+          - docker
+          - python3-pip
+          - git
+        state: present
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Download Docker Compose
+      get_url:
+        url: "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64"
+        dest: /usr/local/bin/docker-compose
+        mode: '0755'
+
+    - name: Create deployment user
+      user:
+        name: deployuser
+        groups: docker
+        append: yes
+        create_home: yes
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Restart Docker service to apply group changes
+      systemd:
+        name: docker
+        state: restarted
+
+    - name: Test Docker installation
+      command: docker --version
+      register: docker_version
+
+    - name: Display Docker version
+      debug:
+        msg: "Docker version: {{ docker_version.stdout }}"
+
+    - name: Test Docker Compose installation
+      command: docker-compose --version
+      register: compose_version
+
+    - name: Display Docker Compose version
+      debug:
+        msg: "Docker Compose version: {{ compose_version.stdout }}"
