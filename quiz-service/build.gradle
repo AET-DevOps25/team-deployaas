@@ -44,6 +44,10 @@ dependencies {
 
     // For WebClient HTTP calls
 	implementation 'org.springframework.boot:spring-boot-starter-webflux' 
+
+    // Monitoring and Metrics
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {
