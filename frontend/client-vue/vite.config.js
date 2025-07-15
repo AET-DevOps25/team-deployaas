@@ -14,7 +14,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api/courses": {
-        target: "http://localhost:8081",
+        target: "http://localhost:8081/api/quiz/courses/detailed",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/courses/, ""),
       },
