@@ -1,17 +1,37 @@
 <template>
   <div data-theme="lofi" class="min-h-screen bg-base-200 flex flex-col">
+    <!-- Navbar -->
     <nav class="navbar bg-base-100 px-6 py-4 shadow-sm">
       <div class="flex-1 flex items-center">
         <BookOpenIcon class="w-8 h-8 text-primary" />
         <span class="text-2xl font-bold ml-2">Study Assistant</span>
       </div>
-      <div class="hidden md:flex gap-6">
+
+      <div class="hidden md:flex gap-6 pr-6">
         <RouterLink to="/home" class="btn btn-ghost">Home</RouterLink>
         <RouterLink to="/courses" class="btn btn-ghost">Courses</RouterLink>
         <RouterLink to="/progress" class="btn btn-ghost">Progress</RouterLink>
       </div>
+
       <div class="flex-none">
-        <button class="btn btn-primary">Profile</button>
+
+        <template v-if="isAuthenticated">
+          <div class="dropdown dropdown-end">
+            <label tabindex="0" class="btn btn-neutral">
+              {{ userEmail }}
+              <svg class="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </label>
+            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40">
+              <li><a @click.prevent="logout">Logout</a></li>
+            </ul>
+          </div>
+        </template>
+
+        <template v-else>
+          <RouterLink to="/login" class="btn btn-primary">Login</RouterLink>
+        </template>
       </div>
     </nav>
 
@@ -96,7 +116,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { RouterLink } from "vue-router";
 // IMPORTANT: Make sure this path correctly points to your axios instance.
 // Using 'api' as the alias for consistency with previous responses.
@@ -118,6 +138,19 @@ import {
 // state
 const courses = ref([]);
 const loading = ref(true);
+
+const isAuthenticated = computed(() => !!localStorage.getItem("token"));
+
+const userEmail = computed(() => {
+  const token = localStorage.getItem("token");
+  if (!token) return "User";
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.sub || "User";
+  } catch {
+    return "User";
+  }
+});
 
 // map your backend's `iconKey` to the lucide component
 const iconMap = {
