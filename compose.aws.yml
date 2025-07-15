@@ -60,7 +60,6 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
@@ -84,9 +83,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
       - GENAI_SERVICE_URL=http://genai-service:5001
-
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
@@ -109,7 +106,6 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - JWT_SECRET=${JWT_SECRET}
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
