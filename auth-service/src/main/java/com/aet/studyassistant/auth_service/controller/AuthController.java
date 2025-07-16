@@ -5,8 +5,9 @@ import com.aet.studyassistant.auth_service.dto.AuthResponse;
 import com.aet.studyassistant.auth_service.model.User;
 import com.aet.studyassistant.auth_service.repository.UserRepository;
 import com.aet.studyassistant.auth_service.security.JwtUtil;
-import com.aet.studyassistant.auth_service.security.UserDetailsImpl; // Import your custom UserDetailsImpl
+import com.aet.studyassistant.auth_service.security.UserDetailsImpl;
 import com.aet.studyassistant.auth_service.security.UserDetailsServiceImpl;
+import com.aet.studyassistant.auth_service.service.FlashcardServiceClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
@@ -14,10 +15,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID; // Import UUID for the userId
+import java.util.UUID; 
 
 @RestController
-@RequestMapping("/api/auth") // Consistent mapping for all auth endpoints
+@RequestMapping("/api/auth")
 public class AuthController {
 
     @Autowired
@@ -27,13 +28,16 @@ public class AuthController {
     private UserRepository userRepo;
 
     @Autowired
-    private UserDetailsServiceImpl userDetailsService; // Your custom UserDetailsService
+    private UserDetailsServiceImpl userDetailsService;
 
     @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private FlashcardServiceClient flashcardServiceClient;
 
     // Test endpoint to check service connection
     @GetMapping("/test")
@@ -44,17 +48,18 @@ public class AuthController {
     // User registration endpoint
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody AuthRequest request) {
-        // Check if email is already in use
         if (userRepo.findByEmail(request.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Email already in use\n");
         }
 
-        // Create new user entity
         User user = new User();
         user.setEmail(request.getEmail());
-        user.setName(request.getName()); // Assuming AuthRequest has a getName() method
+        user.setName(request.getName()); 
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        userRepo.save(user); // Save user to database
+        User savedUser = userRepo.save(user); 
+
+        // Set up default flashcard decks for the new user
+        flashcardServiceClient.setupDefaultDecksForUser(savedUser.getUuid());
 
         return ResponseEntity.ok("User registered successfully\n");
     }
@@ -74,48 +79,26 @@ public class AuthController {
 
             UUID userId = null;
 
-            // Cast to your custom UserDetailsImpl to access the UUID
             if (userDetails instanceof UserDetailsImpl) {
                 UserDetailsImpl customUserDetails = (UserDetailsImpl) userDetails;
-                userId = customUserDetails.getId(); // Retrieve the UUID using your custom getter
+                userId = customUserDetails.getId(); 
                 // If you added getEmail() to UserDetailsImpl and want to use it:
                 // userEmail = customUserDetails.getEmail();
             } else {
-                // This block should ideally not be reached if UserDetailsService is configured
-                // correctly.
-                // Log an error or warning, as it indicates a configuration issue.
-                System.err.println(
-                        "Error: Authenticated UserDetails is not an instance of UserDetailsImpl. Cannot retrieve UUID.");
-                // You might choose to return an internal server error or a more generic "login
-                // failed"
-                // if the UUID is absolutely critical for the frontend to proceed.
+                System.err.println("Error: Authenticated UserDetails is not an instance of UserDetailsImpl. Cannot retrieve UUID.");
             }
 
-            // Generate JWT token using the loaded UserDetails
-            String token = jwtUtil.generateToken(userDetails);
+            // Generate JWT token using the loaded UserDetails and userId
+            String token = jwtUtil.generateToken(userDetails, userId);
 
             // Return the AuthResponse containing the token, userId, and userEmail
-            return ResponseEntity.ok(new AuthResponse(token, userId)); // Updated constructor call
+            return ResponseEntity.ok(new AuthResponse(token, userId)); 
 
         } catch (BadCredentialsException ex) {
-            // Handle invalid email or password
             return ResponseEntity.status(401).body("Invalid email or password");
         } catch (Exception ex) {
-            // Handle any other unexpected errors during the login process
-            ex.printStackTrace(); // Print stack trace for debugging purposes
+            ex.printStackTrace(); 
             return ResponseEntity.status(500).body("Internal server error: " + ex.getMessage());
         }
-    }
-
-    // Endpoint to generate a test token (useful for development)
-    @GetMapping("/test-token")
-    public String getTokenForTesting() {
-        System.out.println("==> /test-token endpoint hit");
-        // Load a known test user to generate a token
-        UserDetails user = userDetailsService.loadUserByUsername("test@example.com"); // Ensure "test@example.com"
-                                                                                      // exists
-        String token = jwtUtil.generateToken(user);
-        System.out.println("Generated token: " + token);
-        return token;
     }
 }

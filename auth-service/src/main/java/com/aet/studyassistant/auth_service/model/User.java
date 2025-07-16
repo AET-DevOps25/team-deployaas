@@ -17,6 +17,7 @@ public class User {
     @Id
     @GeneratedValue
     @JdbcTypeCode(SqlTypes.UUID)
+    @Column(name = "user_id")
     private UUID uuid;
 
     @Column(nullable = false)
@@ -25,7 +26,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "password_hash")
     private String passwordHash;
 
     public void enroll(String courseId) {
