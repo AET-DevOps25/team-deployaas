@@ -99,6 +99,11 @@ public class FlashcardService {
         return Optional.empty();
     }
 
+    public Optional<FlashcardDTO> getFlashcardById(UUID flashcardId) {
+        Optional<Flashcard> flashcard = flashcardRepository.findById(flashcardId);
+        return flashcard.map(this::convertFlashcardToDTO);
+    }
+
     public boolean deleteFlashcard(UUID flashcardId) {
         if (flashcardRepository.existsById(flashcardId)) {
             flashcardRepository.deleteById(flashcardId);

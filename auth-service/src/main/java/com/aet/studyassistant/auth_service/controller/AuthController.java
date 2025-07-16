@@ -7,6 +7,7 @@ import com.aet.studyassistant.auth_service.repository.UserRepository;
 import com.aet.studyassistant.auth_service.security.JwtUtil;
 import com.aet.studyassistant.auth_service.security.UserDetailsImpl; // Import your custom UserDetailsImpl
 import com.aet.studyassistant.auth_service.security.UserDetailsServiceImpl;
+import com.aet.studyassistant.auth_service.service.FlashcardServiceClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
@@ -35,6 +36,9 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private FlashcardServiceClient flashcardServiceClient;
+
     // Test endpoint to check service connection
     @GetMapping("/test")
     public String testConnection() {
@@ -54,7 +58,10 @@ public class AuthController {
         user.setEmail(request.getEmail());
         user.setName(request.getName()); // Assuming AuthRequest has a getName() method
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        userRepo.save(user); // Save user to database
+        User savedUser = userRepo.save(user); // Save user to database and get the saved user with ID
+
+        // Set up default flashcard decks for the new user
+        flashcardServiceClient.setupDefaultDecksForUser(savedUser.getUuid());
 
         return ResponseEntity.ok("User registered successfully\n");
     }
@@ -91,8 +98,8 @@ public class AuthController {
                 // if the UUID is absolutely critical for the frontend to proceed.
             }
 
-            // Generate JWT token using the loaded UserDetails
-            String token = jwtUtil.generateToken(userDetails);
+            // Generate JWT token using the loaded UserDetails and userId
+            String token = jwtUtil.generateToken(userDetails, userId);
 
             // Return the AuthResponse containing the token, userId, and userEmail
             return ResponseEntity.ok(new AuthResponse(token, userId)); // Updated constructor call
