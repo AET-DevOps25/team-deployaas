@@ -1,0 +1,53 @@
+{{- if .Values.services.client.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-nginx-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: client
+data:
+  nginx.conf: |
+    server {
+        listen 80;
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html index.htm;
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /api/quiz/ {
+            proxy_pass http://{{ include "study-assistant.fullname" . }}-quiz-service:{{ .Values.services.quizService.port }}/api/quiz/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/courses {
+            proxy_pass http://{{ include "study-assistant.fullname" . }}-quiz-service:{{ .Values.services.quizService.port }}/api/quiz/courses/detailed;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/flashcard/ {
+            proxy_pass http://{{ include "study-assistant.fullname" . }}-flashcard-service:{{ .Values.services.flashcardService.port }}/api/flashcard/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/auth/ {
+            proxy_pass http://{{ include "study-assistant.fullname" . }}-auth-service:{{ .Values.services.authService.port }}/api/auth/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+{{- end }}

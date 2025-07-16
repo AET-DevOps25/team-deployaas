@@ -1,0 +1,79 @@
+{{- if .Values.services.genaiService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-genai-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: genai-service
+spec:
+  replicas: {{ .Values.services.genaiService.replicas }}
+  selector:
+    matchLabels:
+      {{- include "study-assistant.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: genai-service
+  template:
+    metadata:
+      labels:
+        {{- include "study-assistant.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: genai-service
+    spec:
+      automountServiceAccountToken: {{ not .Values.security.automountServiceAccountToken }}
+      {{- if .Values.security.runAsNonRoot }}
+      securityContext:
+        runAsNonRoot: {{ .Values.security.runAsNonRoot }}
+        runAsUser: {{ .Values.security.runAsUser }}
+        fsGroup: {{ .Values.security.fsGroup }}
+      {{- end }}
+      containers:
+      - name: genai-service
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}/{{ .Values.services.genaiService.image }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.services.genaiService.port }}
+        env:
+        - name: PORT
+          value: {{ .Values.services.genaiService.port | quote }}
+        - name: WEBUI_API_KEY
+{{- if .Values.secrets.createInTemplate }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: WEBUI_API_KEY
+{{- else }}
+          value: {{ .Values.secrets.WEBUI_API_KEY | quote }}
+{{- end }}
+        resources:
+          {{- toYaml .Values.services.genaiService.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.services.genaiService.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.services.genaiService.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-genai-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: genai-service
+spec:
+  selector:
+    {{- include "study-assistant.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: genai-service
+  ports:
+  - port: {{ .Values.services.genaiService.port }}
+    targetPort: {{ .Values.services.genaiService.port }}
+  type: ClusterIP
+{{- end }}

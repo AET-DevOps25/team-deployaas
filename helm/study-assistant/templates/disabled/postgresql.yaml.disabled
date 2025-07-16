@@ -1,0 +1,141 @@
+{{- if .Values.services.postgresql.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-postgresql
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+spec:
+  replicas: {{ .Values.services.postgresql.replicas }}
+  selector:
+    matchLabels:
+      {{- include "study-assistant.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: postgresql
+  template:
+    metadata:
+      labels:
+        {{- include "study-assistant.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: postgresql
+    spec:
+      automountServiceAccountToken: {{ not .Values.security.automountServiceAccountToken }}
+      {{- if .Values.security.runAsNonRoot }}
+      securityContext:
+        runAsNonRoot: false  # PostgreSQL needs to run as root
+      {{- end }}
+      containers:
+      - name: postgresql
+        image: "{{ .Values.services.postgresql.image }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.services.postgresql.port }}
+        env:
+        - name: POSTGRES_DB
+          value: {{ .Values.database.name }}
+        - name: POSTGRES_USER
+{{- if .Values.secrets.createInTemplate }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: DATABASE_USERNAME
+{{- else }}
+          value: {{ .Values.secrets.DATABASE_USERNAME | quote }}
+{{- end }}
+        - name: POSTGRES_PASSWORD
+{{- if .Values.secrets.createInTemplate }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: DATABASE_PASSWORD
+{{- else }}
+          value: {{ .Values.secrets.DATABASE_PASSWORD | quote }}
+{{- end }}
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        resources:
+          {{- toYaml .Values.services.postgresql.resources | nindent 10 }}
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql/data
+        - name: initdb
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: postgresql-data
+        {{- if .Values.services.postgresql.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "study-assistant.fullname" . }}-postgresql-pvc
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
+      - name: initdb
+        configMap:
+          name: {{ include "study-assistant.fullname" . }}-initdb
+---
+{{- if .Values.services.postgresql.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-postgresql-pvc
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.services.postgresql.persistence.size }}
+---
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-postgresql
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+spec:
+  selector:
+    {{- include "study-assistant.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+  ports:
+  - port: {{ .Values.services.postgresql.port }}
+    targetPort: {{ .Values.services.postgresql.port }}
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-initdb
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: postgresql
+data:
+  01-schema.sql: |
+    -- Database initialization script
+    -- Add your schema initialization here
+    CREATE DATABASE IF NOT EXISTS studyassistant;
+  02-data.sql: |
+    -- Database data initialization script
+    -- Add your data initialization here
+{{- end }}

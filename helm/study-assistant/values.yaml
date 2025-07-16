@@ -1,0 +1,162 @@
+# Default values for study-assistant
+# This is a YAML-formatted file.
+
+# Global settings
+global:
+  namespace: teamdeployaas-studyapp
+
+# Namespace configuration
+namespace: teamdeployaas-studyapp
+
+# Image configuration
+image:
+  registry: ghcr.io
+  repository: aet-devops25/team-deployaas
+  tag: latest
+  pullPolicy: Always
+
+# Security settings
+security:
+  automountServiceAccountToken: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Ingress configuration
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: study-assistant.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: study-assistant-tls
+  #    hosts:
+  #      - study-assistant.local
+
+# Database configuration
+database:
+  enabled: true
+  host: studyapp-postgresql
+  port: 5432
+  name: studyassistant
+  username: studyassistant
+  password: changeme123
+
+# Services configuration
+services:
+  # Database (PostgreSQL)
+  postgresql:
+    enabled: true
+    image: postgres:14
+    port: 5432
+    replicas: 1
+    persistence:
+      enabled: true
+      size: 2Gi
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  # Authentication Service
+  authService:
+    enabled: true
+    image: auth-service
+    port: 8083
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  # Quiz Service
+  quizService:
+    enabled: true
+    image: quiz-service
+    port: 8081
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  # Flashcard Service
+  flashcardService:
+    enabled: true
+    image: flashcard-service
+    port: 8082
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  # GenAI Service
+  genaiService:
+    enabled: true
+    image: genai-service
+    port: 5001
+    replicas: 1
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  # Frontend Client
+  client:
+    enabled: true
+    image: client-vue
+    port: 80
+    replicas: 1
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+
+# Environment-specific configuration
+environment:
+  name: dev
+  frontendOrigin: "http://localhost:3000"
+  springProfilesActive: "dev"
+
+# Configuration that can be used as direct environment variables
+config:
+  # Set to false if you don't have permission to create ConfigMaps
+  createConfigMap: false
+  SPRING_PROFILES_ACTIVE: "dev"
+  FRONTEND_ORIGIN: "http://teamdeployaas-study-assistant-client"
+
+# Secrets (these should be overridden with actual values)
+secrets:
+  # Set to false in production and create secrets manually for better security
+  # Set to true only if you have permission to create secrets
+  createInTemplate: false
+  # When createInTemplate is false, these values will be used as direct env vars
+  DATABASE_USERNAME: "studyassistant"
+  DATABASE_PASSWORD: "changeme123"
+  JWT_SECRET: "your-jwt-secret-key-change-me"
+  WEBUI_API_KEY: "your-webui-api-key"

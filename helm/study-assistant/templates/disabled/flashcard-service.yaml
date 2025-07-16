@@ -1,0 +1,110 @@
+{{- if .Values.services.flashcardService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-flashcard-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flashcard-service
+spec:
+  replicas: {{ .Values.services.flashcardService.replicas }}
+  selector:
+    matchLabels:
+      {{- include "study-assistant.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: flashcard-service
+  template:
+    metadata:
+      labels:
+        {{- include "study-assistant.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: flashcard-service
+    spec:
+      automountServiceAccountToken: {{ not .Values.security.automountServiceAccountToken }}
+      {{- if .Values.security.runAsNonRoot }}
+      securityContext:
+        runAsNonRoot: {{ .Values.security.runAsNonRoot }}
+        runAsUser: {{ .Values.security.runAsUser }}
+        fsGroup: {{ .Values.security.fsGroup }}
+      {{- end }}
+      containers:
+      - name: flashcard-service
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}/{{ .Values.services.flashcardService.image }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.services.flashcardService.port }}
+        env:
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-config
+              key: DATABASE_URL
+        - name: SPRING_DATASOURCE_USERNAME
+{{- if .Values.secrets.createInTemplate }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: DATABASE_USERNAME
+{{- else }}
+          value: {{ .Values.secrets.DATABASE_USERNAME | quote }}
+{{- end }}
+        - name: SPRING_DATASOURCE_PASSWORD
+{{- if .Values.secrets.createInTemplate }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: DATABASE_PASSWORD
+{{- else }}
+          value: {{ .Values.secrets.DATABASE_PASSWORD | quote }}
+{{- end }}
+        - name: JWT_SECRET
+{{- if .Values.secrets.createInTemplate }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: JWT_SECRET
+{{- else }}
+          value: {{ .Values.secrets.JWT_SECRET | quote }}
+{{- end }}
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: FRONTEND_ORIGIN
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-config
+              key: FRONTEND_ORIGIN
+        resources:
+          {{- toYaml .Values.services.flashcardService.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /api/flashcard/test
+            port: {{ .Values.services.flashcardService.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/flashcard/test
+            port: {{ .Values.services.flashcardService.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-flashcard-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: flashcard-service
+spec:
+  selector:
+    {{- include "study-assistant.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: flashcard-service
+  ports:
+  - port: {{ .Values.services.flashcardService.port }}
+    targetPort: {{ .Values.services.flashcardService.port }}
+  type: ClusterIP
+{{- end }}

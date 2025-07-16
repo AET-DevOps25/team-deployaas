@@ -1,0 +1,110 @@
+# Production environment values
+# Override default values for production deployment
+
+# Namespace
+namespace: study-assistant-prod
+
+# Image configuration for production
+image:
+  tag: "1.0.0"  # Use specific version tags in production
+  pullPolicy: IfNotPresent
+
+# Security enhancements for production
+security:
+  automountServiceAccountToken: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Production resource requirements
+services:
+  postgresql:
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+    persistence:
+      enabled: true
+      size: 10Gi
+
+  authService:
+    replicas: 2
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+
+  quizService:
+    replicas: 2
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+
+  flashcardService:
+    replicas: 2
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "500m"
+      limits:
+        memory: "1Gi"
+        cpu: "1000m"
+
+  genaiService:
+    replicas: 2
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+
+  client:
+    replicas: 2
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+# Production-specific configuration
+config:
+  SPRING_PROFILES_ACTIVE: "prod"
+  FRONTEND_ORIGIN: "https://study-assistant.yourdomain.com"
+
+# Production ingress configuration
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: study-assistant.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: study-assistant-tls
+      hosts:
+        - study-assistant.yourdomain.com
+
+# Production secrets (MUST be changed from defaults!)
+secrets:
+  DATABASE_USERNAME: "produser"
+  DATABASE_PASSWORD: "CHANGE_ME_STRONG_PASSWORD_123"
+  JWT_SECRET: "CHANGE_ME_PRODUCTION_JWT_SECRET_KEY"
+  WEBUI_API_KEY: "CHANGE_ME_PRODUCTION_WEBUI_API_KEY"

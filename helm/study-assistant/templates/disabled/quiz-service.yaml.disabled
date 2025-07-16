@@ -1,0 +1,114 @@
+{{- if .Values.services.quizService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-quiz-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: quiz-service
+spec:
+  replicas: {{ .Values.services.quizService.replicas }}
+  selector:
+    matchLabels:
+      {{- include "study-assistant.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: quiz-service
+  template:
+    metadata:
+      labels:
+        {{- include "study-assistant.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: quiz-service
+    spec:
+      automountServiceAccountToken: {{ not .Values.security.automountServiceAccountToken }}
+      {{- if .Values.security.runAsNonRoot }}
+      securityContext:
+        runAsNonRoot: {{ .Values.security.runAsNonRoot }}
+        runAsUser: {{ .Values.security.runAsUser }}
+        fsGroup: {{ .Values.security.fsGroup }}
+      {{- end }}
+      containers:
+      - name: quiz-service
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}/{{ .Values.services.quizService.image }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.services.quizService.port }}
+        env:
+        - name: SPRING_DATASOURCE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-config
+              key: DATABASE_URL
+        - name: SPRING_DATASOURCE_USERNAME
+{{- if .Values.secrets.createInTemplate }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: DATABASE_USERNAME
+{{- else }}
+          value: {{ .Values.secrets.DATABASE_USERNAME | quote }}
+{{- end }}
+        - name: SPRING_DATASOURCE_PASSWORD
+{{- if .Values.secrets.createInTemplate }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: DATABASE_PASSWORD
+{{- else }}
+          value: {{ .Values.secrets.DATABASE_PASSWORD | quote }}
+{{- end }}
+        - name: JWT_SECRET
+{{- if .Values.secrets.createInTemplate }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-secrets
+              key: JWT_SECRET
+{{- else }}
+          value: {{ .Values.secrets.JWT_SECRET | quote }}
+{{- end }}
+        - name: SPRING_PROFILES_ACTIVE
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-config
+              key: SPRING_PROFILES_ACTIVE
+        - name: FRONTEND_ORIGIN
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "study-assistant.fullname" . }}-config
+              key: FRONTEND_ORIGIN
+        {{- if .Values.services.genaiService.enabled }}
+        - name: GENAI_SERVICE_URL
+          value: "http://{{ include "study-assistant.fullname" . }}-genai-service:{{ .Values.services.genaiService.port }}"
+        {{- end }}
+        resources:
+          {{- toYaml .Values.services.quizService.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /api/quiz/test
+            port: {{ .Values.services.quizService.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/quiz/test
+            port: {{ .Values.services.quizService.port }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-quiz-service
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: quiz-service
+spec:
+  selector:
+    {{- include "study-assistant.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: quiz-service
+  ports:
+  - port: {{ .Values.services.quizService.port }}
+    targetPort: {{ .Values.services.quizService.port }}
+  type: ClusterIP
+{{- end }}

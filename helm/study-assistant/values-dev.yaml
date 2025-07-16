@@ -1,0 +1,80 @@
+# Development environment values
+# Override default values for development deployment
+
+# Namespace
+namespace: dev
+
+# Image configuration for development
+image:
+  tag: latest
+  pullPolicy: Always
+
+# Reduced resource requirements for development
+services:
+  postgresql:
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+    persistence:
+      enabled: false  # Use emptyDir for development
+
+  authService:
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+
+  quizService:
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+
+  flashcardService:
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+
+  genaiService:
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "200m"
+
+  client:
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+      limits:
+        memory: "128Mi"
+        cpu: "100m"
+
+# Development-specific configuration
+config:
+  SPRING_PROFILES_ACTIVE: "dev"
+  FRONTEND_ORIGIN: "*"
+
+# Development secrets (change these in production!)
+secrets:
+  DATABASE_USERNAME: "devuser"
+  DATABASE_PASSWORD: "devpass123"
+  JWT_SECRET: "dev-jwt-secret-key-change-in-production"
+  WEBUI_API_KEY: "dev-webui-api-key"

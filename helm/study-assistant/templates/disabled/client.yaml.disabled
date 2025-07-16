@@ -1,0 +1,75 @@
+{{- if .Values.services.client.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-client
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: client
+spec:
+  replicas: {{ .Values.services.client.replicas }}
+  selector:
+    matchLabels:
+      {{- include "study-assistant.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: client
+  template:
+    metadata:
+      labels:
+        {{- include "study-assistant.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: client
+    spec:
+      automountServiceAccountToken: {{ not .Values.security.automountServiceAccountToken }}
+      {{- if .Values.security.runAsNonRoot }}
+      securityContext:
+        runAsNonRoot: {{ .Values.security.runAsNonRoot }}
+        runAsUser: {{ .Values.security.runAsUser }}
+        fsGroup: {{ .Values.security.fsGroup }}
+      {{- end }}
+      containers:
+      - name: client
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}/{{ .Values.services.client.image }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+          readOnly: true
+        resources:
+          {{- toYaml .Values.services.client.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: {{ include "study-assistant.fullname" . }}-nginx-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-client
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: client
+spec:
+  selector:
+    {{- include "study-assistant.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: client
+  ports:
+  - port: {{ .Values.services.client.port }}
+    targetPort: 80
+  type: ClusterIP
+{{- end }}
