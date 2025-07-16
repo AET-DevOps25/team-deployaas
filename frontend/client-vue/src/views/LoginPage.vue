@@ -42,6 +42,7 @@ async function login() {
       password: password.value,
     })
     localStorage.setItem('token', res.data.token)
+    localStorage.setItem('userId', res.data.userId)
     router.push('/home')
   } catch (err) {
     alert('Login failed')
