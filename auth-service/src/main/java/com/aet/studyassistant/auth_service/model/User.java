@@ -17,6 +17,7 @@ public class User {
     @Id
     @GeneratedValue
     @JdbcTypeCode(SqlTypes.UUID)
+    @Column(name = "user_id")
     private UUID uuid;
 
     @Column(nullable = false)
