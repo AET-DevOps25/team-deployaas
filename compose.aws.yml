@@ -187,6 +187,7 @@ services:
 
 volumes:
   pgdata:
+  grafana-storage: 
 
 networks:
   traefik:

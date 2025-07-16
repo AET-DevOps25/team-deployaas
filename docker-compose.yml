@@ -125,3 +125,5 @@ services:
 
 volumes:
   pgdata:
+  grafana-storage: 
+    driver: local
