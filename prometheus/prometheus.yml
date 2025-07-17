@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 15s
+
+# Add this to load alert rules
+rule_files:
+  - "prometheus.rules.yml"
+
+# Add this to send alerts to Alertmanager
+alerting:
+  alertmanagers:
+  - static_configs:
+    # 'alertmanager' is the service name in docker-compose.yml
+    # '9093' is Alertmanager's default internal port
+    - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: 'quiz-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['quiz-service:8081']
+
+  - job_name: 'flashcard-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['flashcard-service:8082']
+
+  - job_name: 'auth-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['auth-service:8083']
+
+  - job_name: 'genai-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['genai-service:5001']

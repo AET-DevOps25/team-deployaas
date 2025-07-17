@@ -1,6 +1,5 @@
 <template>
   <div data-theme="lofi" class="min-h-screen bg-base-200 flex flex-col">
-    <!-- Navbar -->
     <nav class="navbar bg-base-100 px-6 py-4 shadow-sm">
       <div class="navbar-start">
         <button @click="goBack" class="btn btn-ghost">
@@ -19,14 +18,11 @@
       </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="flex-1 container mx-auto py-8 px-6">
-      <!-- Loading State -->
       <div v-if="loading" class="flex justify-center items-center h-64">
         <span class="loading loading-spinner loading-lg"></span>
       </div>
 
-      <!-- Deck Actions -->
       <div v-else class="mb-6">
         <div class="flex flex-wrap gap-4 justify-between items-center">
           <div class="stats shadow">
@@ -57,7 +53,6 @@
         </div>
       </div>
 
-      <!-- Empty State -->
       <div v-if="!loading && flashcards.length === 0" class="text-center py-16">
         <BookOpenIcon class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
         <h2 class="text-2xl font-bold mb-2">No Flashcards Yet</h2>
@@ -70,7 +65,6 @@
         </button>
       </div>
 
-      <!-- Flashcards List -->
       <div v-else-if="!loading" class="space-y-4">
         <div
           v-for="(flashcard, index) in flashcards"
@@ -117,7 +111,6 @@
       </div>
     </div>
 
-    <!-- Create/Edit Flashcard Modal -->
     <dialog ref="createFlashcardModal" class="modal" :class="{ 'modal-open': showCreateFlashcardModal }">
       <div class="modal-box max-w-2xl">
         <h3 class="font-bold text-lg mb-4">
@@ -161,7 +154,6 @@
       </form>
     </dialog>
 
-    <!-- Delete Confirmation Modal -->
     <dialog ref="deleteModal" class="modal" :class="{ 'modal-open': showDeleteModal }">
       <div class="modal-box">
         <h3 class="font-bold text-lg mb-4">Delete Flashcard</h3>
@@ -182,7 +174,6 @@
       </form>
     </dialog>
 
-    <!-- Export Success Modal -->
     <dialog ref="exportSuccessModal" class="modal" :class="{ 'modal-open': showExportSuccessModal }">
       <div class="modal-box max-w-2xl">
         <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
@@ -232,6 +223,9 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+// Import your configured Axios instance. Adjust the path if needed.
+import api from "../utils/api.js"; 
+
 import {
   ArrowLeft as ArrowLeftIcon,
   Plus as PlusIcon,
@@ -242,7 +236,9 @@ import {
   Trash as TrashIcon,
   Download as DownloadIcon,
 } from "lucide-vue-next";
-import { apiBaseUrl } from "@/config/api.js";
+
+// You no longer need apiBaseUrl if your axios instance is configured with a base URL
+// import { apiBaseUrl } from "@/config/api.js"; 
 
 const route = useRoute();
 const router = useRouter();
@@ -273,19 +269,23 @@ const loadDeck = async () => {
     loading.value = true;
     const deckId = route.params.deckId;
     
-    // Load deck info
-    const deckResponse = await fetch(`${apiBaseUrl.flashcard}/decks/${deckId}`);
-    if (deckResponse.ok) {
-      deck.value = await deckResponse.json();
-    }
+    // Load deck info using Axios
+    const deckResponse = await api.get(`/decks/${deckId}`);
+    deck.value = deckResponse.data;
 
-    // Load flashcards
-    const flashcardsResponse = await fetch(`${apiBaseUrl.flashcard}/decks/${deckId}/flashcards`);
-    if (flashcardsResponse.ok) {
-      flashcards.value = await flashcardsResponse.json();
-    }
+    // Load flashcards using Axios
+    const flashcardsResponse = await api.get(`/decks/${deckId}/flashcards`);
+    flashcards.value = flashcardsResponse.data;
+
   } catch (error) {
-    console.error("Error loading deck:", error);
+    console.error("Error loading deck or flashcards:", error);
+    // Handle specific error types, e.g., 404 for not found, 403 for forbidden
+    // If the deck is not found, you might want to redirect or show a specific message
+    if (error.response && error.response.status === 404) {
+      console.warn("Deck not found.");
+      // Optionally, redirect to the decks list or show a "Deck Not Found" message
+      // router.push('/flashcards'); 
+    }
   } finally {
     loading.value = false;
   }
@@ -294,24 +294,23 @@ const loadDeck = async () => {
 const submitFlashcard = async () => {
   try {
     const isEditing = editingFlashcard.value !== null;
-    const url = isEditing 
-      ? `${apiBaseUrl.flashcard}/flashcards/${editingFlashcard.value.id}`
-      : `${apiBaseUrl.flashcard}/decks/${route.params.deckId}/flashcards`;
-    
-    const method = isEditing ? "PUT" : "POST";
+    const deckId = route.params.deckId;
+    let response;
 
-    const response = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(flashcardForm.value),
-    });
-
-    if (response.ok) {
-      await loadDeck();
-      cancelFlashcardForm();
+    if (isEditing) {
+      // Edit existing flashcard using Axios PUT
+      response = await api.put(`/flashcards/${editingFlashcard.value.id}`, flashcardForm.value);
+    } else {
+      // Create new flashcard using Axios POST
+      response = await api.post(`/decks/${deckId}/flashcards`, flashcardForm.value);
     }
+
+    // Axios throws an error for non-2xx status codes, so if we reach here, it's ok
+    await loadDeck(); // Reload data after successful creation/update
+    cancelFlashcardForm(); // Reset form and close modal
   } catch (error) {
     console.error("Error saving flashcard:", error);
+    // You can check error.response.data for backend validation messages
   }
 };
 
@@ -329,13 +328,11 @@ const deleteFlashcardConfirm = (flashcard) => {
 
 const deleteFlashcard = async () => {
   try {
-    const response = await fetch(`${apiBaseUrl.flashcard}/flashcards/${flashcardToDelete.value.id}`, {
-      method: "DELETE",
-    });
-
-    if (response.ok) {
-      await loadDeck();
-    }
+    // Delete flashcard using Axios DELETE
+    await api.delete(`/flashcards/${flashcardToDelete.value.id}`);
+    
+    // Axios throws an error for non-2xx status codes, so if we reach here, it's ok
+    await loadDeck(); // Reload data after successful deletion
     showDeleteModal.value = false;
     flashcardToDelete.value = null;
   } catch (error) {
@@ -346,8 +343,7 @@ const deleteFlashcard = async () => {
 const cancelFlashcardForm = () => {
   showCreateFlashcardModal.value = false;
   editingFlashcard.value = null;
-  flashcardForm.value.front = "";
-  flashcardForm.value.back = "";
+  flashcardForm.value = { front: "", back: "" }; // Reset form fields
 };
 
 const exportToAnki = () => {
@@ -397,3 +393,7 @@ onMounted(() => {
   loadDeck();
 });
 </script>
+
+<style scoped>
+/* Any specific styles for this component */
+</style>
