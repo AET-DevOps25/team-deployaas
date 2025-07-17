@@ -275,6 +275,7 @@ import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
 } from "lucide-vue-next";
+import { apiBaseUrl } from "../../config/api.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -464,13 +465,13 @@ onMounted(async () => {
   try {
     // Fetch chapter details
     const chapterRes = await fetch(
-      `http://localhost:8081/api/quiz/chapters/${chapterId}`
+      `${apiBaseUrl.quiz}/chapters/${chapterId}`
     );
     chapter.value = await chapterRes.json();
 
     // Fetch questions for the selected chapter
     const questionsRes = await fetch(
-      `http://localhost:8081/api/quiz/chapters/${chapterId}/questions`
+      `${apiBaseUrl.quiz}/chapters/${chapterId}/questions`
     );
     questions.value = await questionsRes.json();
   } catch (error) {
