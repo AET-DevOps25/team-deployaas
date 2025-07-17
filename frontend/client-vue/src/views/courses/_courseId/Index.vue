@@ -21,10 +21,10 @@
 
       <div v-else-if="!course.id" class="text-center py-16">
         <h1 class="text-3xl font-bold mb-4">Course Not Found</h1>
-        <p class="text-lg text-base-content/70">The requested course could not be found or loaded.</p>
-        <button @click="goBack" class="btn btn-primary mt-6">
-          Go Back
-        </button>
+        <p class="text-lg text-base-content/70">
+          The requested course could not be found or loaded.
+        </p>
+        <button @click="goBack" class="btn btn-primary mt-6">Go Back</button>
       </div>
 
       <div v-else class="card bg-base-100 shadow-xl p-8">
@@ -34,7 +34,9 @@
             {{ course.difficulty }}
           </span>
         </div>
-        <p class="text-lg text-base-content/70 mb-6">{{ course.description }}</p>
+        <p class="text-lg text-base-content/70 mb-6">
+          {{ course.description }}
+        </p>
 
         <div class="stats stats-vertical lg:stats-horizontal shadow mb-8">
           <div class="stat">
@@ -49,16 +51,28 @@
 
         <h2 class="text-2xl font-semibold mb-4">Chapters</h2>
         <ul v-if="chapters.length" class="space-y-4">
-          <li v-for="chapter in chapters" :key="chapter.id" class="card bg-base-200 shadow-sm p-4">
+          <li
+            v-for="chapter in chapters"
+            :key="chapter.id"
+            class="card bg-base-200 shadow-sm p-4"
+          >
             <div class="flex justify-between items-center">
               <div>
                 <h3 class="text-xl font-medium">{{ chapter.name }}</h3>
-                <p v-if="chapter.questionCount !== undefined" class="text-sm text-base-content/70">
+                <p
+                  v-if="chapter.questionCount !== undefined"
+                  class="text-sm text-base-content/70"
+                >
                   {{ chapter.questionCount }} questions
                 </p>
-                <p v-else class="text-sm text-base-content/70">Loading question count...</p>
+                <p v-else class="text-sm text-base-content/70">
+                  Loading question count...
+                </p>
               </div>
-              <button @click="startChapterQuiz(chapter.id)" class="btn btn-primary">
+              <button
+                @click="startChapterQuiz(chapter.id)"
+                class="btn btn-primary"
+              >
                 Start Quiz
                 <ArrowRightIcon class="w-4 h-4 ml-2" />
               </button>
@@ -131,7 +145,6 @@ const goBack = () => {
     }
   }
 };
-
 const startChapterQuiz = (chapterId) => {
   router.push(`/quiz/${chapterId}`);
 };
@@ -149,17 +162,17 @@ const difficultyBadge = (level) => {
   }
 };
 
-// Fetch data
+// Fetch data on component mount
 onMounted(async () => {
   const courseId = route.params.courseId;
-  loading.value = true;
 
   if (!courseId) {
     console.error("CourseDetailPage: No courseId found in route params.");
     course.value = {
       id: null,
       title: "Course Not Found",
-      description: "No course ID was provided. Please navigate from the courses list.",
+      description:
+        "No course ID was provided. Please navigate from the courses list.",
       difficulty: "N/A",
       estimatedTime: "N/A",
     };
@@ -176,11 +189,14 @@ onMounted(async () => {
       fetchedCourse = allCourses.find((c) => c.id === courseId);
 
       if (!fetchedCourse) {
-        console.warn(`CourseDetailPage: Course with ID ${courseId} not found in the list of all courses.`);
+        console.warn(
+          `CourseDetailPage: Course with ID ${courseId} not found in the list of all courses.`
+        );
         course.value = {
           id: null,
           title: "Course Not Found",
-          description: "The requested course could not be found in the available list.",
+          description:
+            "The requested course could not be found in the available list.",
           difficulty: "N/A",
           estimatedTime: "N/A",
         };
@@ -189,13 +205,16 @@ onMounted(async () => {
         return;
       }
       course.value = fetchedCourse;
-
     } catch (courseFetchErr) {
-      console.error("CourseDetailPage: Failed to fetch all courses (fallback method).", courseFetchErr);
+      console.error(
+        "CourseDetailPage: Failed to fetch all courses (fallback method).",
+        courseFetchErr
+      );
       course.value = {
         id: null,
         title: "Error Loading Course Data",
-        description: "Could not load course details due to an unexpected error. Please try again later.",
+        description:
+          "Could not load course details due to an unexpected error. Please try again later.",
         difficulty: "N/A",
         estimatedTime: "N/A",
       };
@@ -207,21 +226,28 @@ onMounted(async () => {
     // Fetch chapters for the course using the /quiz/courses/:courseId/chapters endpoint.
     if (course.value.id) {
       try {
-        const { data: chapterList } = await api.get(`/quiz/courses/${courseId}/chapters`);
-        chapters.value = chapterList.map(chapter => ({
+        const { data: chapterList } = await api.get(
+          `/quiz/courses/${courseId}/chapters`
+        );
+        chapters.value = chapterList.map((chapter) => ({
           ...chapter,
-          questionCount: chapter.questions ? chapter.questions.length : 0
+          questionCount: chapter.questions ? chapter.questions.length : 0,
         }));
       } catch (chapterFetchErr) {
-        console.error("CourseDetailPage: Failed to fetch chapters for course.", chapterFetchErr);
+        console.error(
+          "CourseDetailPage: Failed to fetch chapters for course.",
+          chapterFetchErr
+        );
         chapters.value = [];
       }
     } else {
-        chapters.value = [];
+      chapters.value = [];
     }
-
   } catch (err) {
-    console.error("CourseDetailPage: An unhandled error occurred during data loading.", err);
+    console.error(
+      "CourseDetailPage: An unhandled error occurred during data loading.",
+      err
+    );
     course.value = {
       id: null,
       title: "Loading Error",

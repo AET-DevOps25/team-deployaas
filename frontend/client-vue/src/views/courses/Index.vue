@@ -14,16 +14,28 @@
       </div>
 
       <div class="flex-none">
-
         <template v-if="isAuthenticated">
           <div class="dropdown dropdown-end">
             <label tabindex="0" class="btn btn-neutral">
               {{ userEmail }}
-              <svg class="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              <svg
+                class="ml-2 w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </label>
-            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40">
+            <ul
+              tabindex="0"
+              class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40"
+            >
               <li><a @click.prevent="logout">Logout</a></li>
             </ul>
           </div>
@@ -50,7 +62,9 @@
       </div>
       <div v-else-if="!courses.length" class="text-center py-16">
         <h1 class="text-3xl font-bold mb-4">No Courses Found</h1>
-        <p class="text-lg text-base-content/70">It looks like there are no courses available yet.</p>
+        <p class="text-lg text-base-content/70">
+          It looks like there are no courses available yet.
+        </p>
       </div>
 
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -136,6 +150,7 @@ import {
 } from "lucide-vue-next";
 
 // state
+// state
 const courses = ref([]);
 const loading = ref(true);
 
@@ -166,6 +181,7 @@ const iconMap = {
 const DefaultIcon = CodeIcon;
 
 // pick a Daisy badge class by difficulty
+// pick a Daisy badge class by difficulty
 function difficultyBadge(level) {
   switch (level) {
     case "Beginner":
@@ -179,6 +195,7 @@ function difficultyBadge(level) {
   }
 }
 
+// fetch on mount
 // fetch on mount
 onMounted(async () => {
   try {
@@ -199,10 +216,10 @@ onMounted(async () => {
 /* Any specific styles for this component, if needed */
 /* Ensure elements like the description don't overflow */
 .text-base-content\/70 {
-    /* Example to limit description lines for consistent card height */
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3; /* Limit to 3 lines */
-    -webkit-box-orient: vertical;
+  /* Example to limit description lines for consistent card height */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Limit to 3 lines */
+  -webkit-box-orient: vertical;
 }
 </style>
