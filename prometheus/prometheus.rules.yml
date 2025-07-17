@@ -8,50 +8,62 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: "Service {{ $labels.job }} is Down"
-          description: "The {{ $labels.job }} (instance {{ $labels.instance }}) has been down for more than 1 minute. Check container status."
+          summary: "Service DOWN: {{ $labels.job }}"
+          description: "The service '{{ $labels.job }}' (instance {{ $labels.instance }}) has been down for more than 1 minute. Check container status."
 
   - name: service_performance
     rules:
       # Alert: Spring Boot Service High Latency (Slow Response Time)
       # This rule covers Quiz, Flashcard, and Auth services
+      # Using 90th percentile (0.90) and a threshold of 0.5 seconds
       - alert: SpringBootServiceHighLatency
-        expr: histogram_quantile(0.90, sum by (le, job) (rate(http_server_requests_seconds_bucket{job=~"quiz-service|flashcard-service|auth-service"}[5m]))) > 0.5
+        expr: histogram_quantile(0.90, sum by (le, job) (rate(http_server_requests_seconds_bucket{job=~"quiz-service|flashcard-service|auth-service", uri!="/actuator/prometheus"}[5m]))) > 0.5
         for: 2m
         labels:
           severity: warning
         annotations:
           summary: "High Latency for {{ $labels.job }}"
-          description: "The 90th percentile request latency for {{ $labels.job }} (instance {{ $labels.instance }}) is above 0.5 seconds for 2 minutes."
+          description: "The 90th percentile request latency for {{ $labels.job }} (instance {{ $labels.instance }}) is above 0.5 seconds for 2 minutes. Excludes /actuator/prometheus."
 
       # Alert: Spring Boot Service High Error Rate (5xx HTTP status codes)
-      # This rule covers Quiz, Flashcard, and Auth services
+      # This rule covers Quiz, Flashcard, and Auth services.
+      # Using 'outcome="SERVER_ERROR"' for 5xx errors and 'uri!="/actuator/prometheus"' filter.
       - alert: SpringBootServiceHighErrorRate
-        expr: sum(rate(http_server_requests_seconds_count{job=~"quiz-service|flashcard-service|auth-service", status="5xx"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~"quiz-service|flashcard-service|auth-service"}[5m])) > 0.05
+        expr: |
+          sum(rate(http_server_requests_seconds_count{job=~"quiz-service|flashcard-service|auth-service", outcome="SERVER_ERROR", uri!="/actuator/prometheus"}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count{job=~"quiz-service|flashcard-service|auth-service", uri!="/actuator/prometheus"}[5m]))
+          > 0.05
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: "High Error Rate for {{ $labels.job }}"
-          description: "The {{ $labels.job }} (instance {{ $labels.instance }}) is returning more than 5% 5xx errors for 1 minute."
+          summary: "High Server Error Rate for {{ $labels.job }}"
+          description: "The {{ $labels.job }} (instance {{ $labels.instance }}) is returning more than 5% server (5xx) errors for 1 minute. Excludes /actuator/prometheus."
 
       # Alert: GenAI Service High Latency
-      # This uses metrics from `prometheus_fastapi_instrumentator`
+      # Confirmed metric: http_request_duration_highr_seconds_bucket.
+      # Using 90th percentile (0.90) and a threshold of 0.5 seconds.
       - alert: GenAIServiceHighLatency
-        expr: histogram_quantile(0.90, sum by (le, job) (rate(http_request_duration_seconds_bucket{job="genai-service"}[5m]))) > 0.5
+        expr: histogram_quantile(0.90, sum by (le, job) (rate(http_request_duration_highr_seconds_bucket{job="genai-service", handler!="/metrics"}[5m]))) > 0.5
         for: 2m
         labels:
           severity: warning
         annotations:
           summary: "High Latency for GenAI Service"
-          description: "The 90th percentile request latency for GenAI Service (instance {{ $labels.instance }}) is above 0.5 seconds for 2 minutes."
+          description: "The 90th percentile request latency for GenAI Service (instance {{ $labels.instance }}) is above 0.5 seconds for 2 minutes. Excludes /metrics."
 
-      # Alert: GenAI Service High Error Rate
+      # Alert: GenAI Service High Error Rate (4xx or 5xx HTTP status codes)
+      # Confirmed metric: http_requests_total with 'status' label.
       - alert: GenAIServiceHighErrorRate
-        expr: sum(rate(http_requests_total{job="genai-service", status_code=~"5.."}[5m])) / sum(rate(http_requests_total{job="genai-service"}[5m])) > 0.05
+        expr: |
+          sum(rate(http_requests_total{job="genai-service", handler!="/metrics", status=~"4xx|5xx"}[5m]))
+          /
+          sum(rate(http_requests_total{job="genai-service", handler!="/metrics"}[5m]))
+          > 0.05
         for: 1m
         labels:
           severity: critical
         annotations:
           summary: "High Error Rate for GenAI Service"
-          description: "The GenAI Service (instance {{ $labels.instance }}) is returning more than 5% 5xx errors for 1 minute."
+          description: "The GenAI Service (instance {{ $labels.instance }}) is returning more than 5% client (4xx) or server (5xx) errors for 1 minute. Excludes /metrics."

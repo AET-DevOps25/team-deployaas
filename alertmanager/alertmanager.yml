@@ -1,8 +1,7 @@
 global:
-  # Optional: Define global Slack API URL if using Slack for notifications
- 
+
 route:
-  receiver: 'default-receiver'
+  receiver: 'default-receiver' # All alerts will initially go to this receiver
   group_by: ['alertname', 'job', 'instance'] # Group alerts by their name, service, and specific instance
   group_wait: 30s # Wait 30 seconds for more alerts for the same group before sending initial notification
   group_interval: 5m # Wait 5 minutes between sending notifications for a continuing alert group
@@ -11,4 +10,4 @@ route:
 receivers:
   - name: 'default-receiver'
     # This is where you configure your actual notification method.
-    # For testing, you can just verify in Alertmanager UI (http://localhost:9093)
+    # For this task, you can simply verify alerts in the Alertmanager UI (http://localhost:9093).
