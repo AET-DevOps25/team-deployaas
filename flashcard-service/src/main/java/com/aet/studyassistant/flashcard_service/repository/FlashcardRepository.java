@@ -1,0 +1,13 @@
+package com.aet.studyassistant.flashcard_service.repository;
+
+import com.aet.studyassistant.flashcard_service.model.Flashcard;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.UUID;
+
+@Repository
+public interface FlashcardRepository extends JpaRepository<Flashcard, UUID> {
+    List<Flashcard> findByDeckId(UUID deckId);
+}

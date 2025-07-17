@@ -7,17 +7,29 @@ jobs:
   build:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
-    
-    environment:
-      name: AWS
+    environment: AWS
 
     strategy:
       matrix:
-        service: [client, auth-service, quiz-service, flashcard-service]
+        include:
+          - service: client
+            context: frontend/client-vue
+            dockerfile: frontend/client-vue/Dockerfile
+          - service: auth-service
+            context: auth-service
+            dockerfile: auth-service/Dockerfile
+          - service: quiz-service
+            context: quiz-service
+            dockerfile: quiz-service/Dockerfile
+          - service: flashcard-service
+            context: flashcard-service
+            dockerfile: flashcard-service/Dockerfile
+          - service: genai-service
+            context: genai-service
+            dockerfile: genai-service/Dockerfile
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -26,11 +38,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Extract Docker Metadata
-        id: meta
+      - id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
@@ -38,11 +48,11 @@ jobs:
             type=raw,value=latest
             type=ref,event=branch
 
-      - name: Build and Push Docker Image
+      - name: Build & Push ${{ matrix.service }}
         uses: docker/build-push-action@v5
         with:
-          context: ./${{ matrix.service }}
-          file: ./${{ matrix.service }}/Dockerfile
+          context: ./${{ matrix.context }}
+          file: ./${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -51,7 +61,7 @@ jobs:
             REACT_APP_QUIZ_HOST=quiz.${{ vars.EC2_PUBLIC_IP }}.nip.io
             REACT_APP_FLASHCARD_HOST=flashcard.${{ vars.EC2_PUBLIC_IP }}.nip.io
             FRONTEND_ORIGIN=https://client.${{ vars.EC2_PUBLIC_IP }}.nip.io
-      
+
       - name: Debug IP injection
         if: matrix.service == 'client'
         run: |
@@ -59,4 +69,3 @@ jobs:
           echo "Quiz Host: quiz.${{ vars.EC2_PUBLIC_IP }}.nip.io"
           echo "Flashcard Host: flashcard.${{ vars.EC2_PUBLIC_IP }}.nip.io"
           echo "FRONTEND_ORIGIN=https://client.${{ vars.EC2_PUBLIC_IP }}.nip.io"
-
