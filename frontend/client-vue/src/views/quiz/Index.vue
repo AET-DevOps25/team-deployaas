@@ -51,44 +51,101 @@
               :disabled="submittingAnswer"
             />
 
-            <!-- Submit Answer Button -->
-            <div class="flex gap-2 mt-4">
-              <button
-                @click="submitAnswer"
-                :disabled="!currentAnswer.trim() || submittingAnswer"
-                class="btn bg-purple-700 text-white hover:bg-purple-800"
+            <!-- Submit Answer Buttons -->
+            <div class="flex gap-2 mt-4 flex-wrap">
+              <div
+                class="tooltip tooltip-bottom"
+                data-tip="Get quick AI feedback (2-3 sentences) on your answer quality"
               >
-                <span
-                  v-if="submittingAnswer"
-                  class="loading loading-spinner loading-sm"
-                ></span>
-                {{
-                  submittingAnswer ? "Getting AI Feedback..." : "Submit Answer"
-                }}
-              </button>
+                <button
+                  @click="submitAnswer"
+                  :disabled="!currentAnswer.trim() || submittingAnswer"
+                  class="btn bg-purple-700 text-white hover:bg-purple-800"
+                >
+                  <span
+                    v-if="submittingAnswer"
+                    class="loading loading-spinner loading-sm"
+                  ></span>
+                  {{
+                    submittingAnswer
+                      ? "Getting AI Feedback..."
+                      : "Submit Answer"
+                  }}
+                </button>
+              </div>
 
-              <button
-                @click="submitAdvancedAnswer"
-                :disabled="!currentAnswer.trim() || submittingAnswer"
-                class="btn btn-outline btn-secondary"
+              <div
+                class="tooltip tooltip-bottom"
+                data-tip="Receive detailed AI feedback with strengths, areas for improvement, and specific suggestions"
               >
-                <span
-                  v-if="submittingAnswer"
-                  class="loading loading-spinner loading-sm"
-                ></span>
-                {{ submittingAnswer ? "Analyzing..." : "Semantic Analysis" }}
-              </button>
+                <button
+                  @click="submitAdvancedAnswer"
+                  :disabled="!currentAnswer.trim() || submittingAnswer"
+                  class="btn btn-outline btn-secondary"
+                >
+                  <span
+                    v-if="submittingAnswer"
+                    class="loading loading-spinner loading-sm"
+                  ></span>
+                  {{
+                    submittingAnswer ? "Analyzing..." : "Get Advanced Feedback"
+                  }}
+                </button>
+              </div>
+
+              <div
+                class="tooltip tooltip-bottom"
+                data-tip="Non-AI Semantic analysis comparing key concepts with sample solution (Warning: High similarity doesn't guarantee correctness)"
+              >
+                <button
+                  @click="submitSemanticAnswer"
+                  :disabled="!currentAnswer.trim() || submittingAnswer"
+                  class="btn btn-outline btn-info"
+                >
+                  <span
+                    v-if="submittingAnswer"
+                    class="loading loading-spinner loading-sm"
+                  ></span>
+                  {{ submittingAnswer ? "Analyzing..." : "Check Similarity" }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- AI Feedback Card -->
+        <!-- Feedback Card -->
         <div v-if="currentFeedback" class="card bg-base-100 shadow-lg mb-8">
           <div class="card-body">
             <h3 class="text-xl font-medium mb-4 flex items-center gap-2">
-              <span class="text-purple-700">🤖</span>
-              AI Feedback
+              <span
+                v-if="currentFeedback.model_used?.includes('semantic')"
+                class="text-blue-600"
+                >📊</span
+              >
+              <span v-else class="text-purple-700">🤖</span>
+              <span v-if="currentFeedback.model_used?.includes('semantic')"
+                >Semantic Analysis</span
+              >
+              <span v-else>AI Feedback</span>
             </h3>
+
+            <!-- Semantic Analysis Score (only for semantic feedback) -->
+            <div
+              v-if="currentFeedback.model_used?.includes('semantic')"
+              class="mb-4"
+            >
+              <h4 class="font-medium mb-2">Similarity Score:</h4>
+              <div class="flex items-center gap-2">
+                <progress
+                  class="progress progress-info w-32"
+                  :value="currentFeedback.score || 0"
+                  max="100"
+                ></progress>
+                <span class="text-sm font-mono"
+                  >{{ (currentFeedback.score || 0).toFixed(1) }}%</span
+                >
+              </div>
+            </div>
 
             <!-- Main Feedback -->
             <div class="mb-4">
@@ -351,6 +408,42 @@ const submitAdvancedAnswer = async () => {
   } catch (error) {
     console.error("Error submitting answer for advanced analysis:", error);
     alert("Error connecting to the feedback service. Please try again.");
+  } finally {
+    submittingAnswer.value = false;
+  }
+};
+
+// Submit answer for semantic similarity analysis
+const submitSemanticAnswer = async () => {
+  if (!currentAnswer.value.trim()) return;
+
+  submittingAnswer.value = true;
+  try {
+    const response = await fetch(
+      `/api/quiz/questions/${currentQuestion.value.id}/submit/semantic`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          answer: currentAnswer.value,
+        }),
+      }
+    );
+
+    if (response.ok) {
+      const feedback = await response.json();
+      feedbacks.value[currentQuestionIndex.value] = feedback;
+    } else {
+      console.error("Failed to submit answer for semantic analysis");
+      alert("Failed to get semantic similarity feedback. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error submitting answer for semantic analysis:", error);
+    alert(
+      "Error connecting to the semantic analysis service. Please try again."
+    );
   } finally {
     submittingAnswer.value = false;
   }

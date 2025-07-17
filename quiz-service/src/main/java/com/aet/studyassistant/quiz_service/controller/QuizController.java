@@ -179,6 +179,43 @@ public class QuizController {
             return ResponseEntity.status(500).body("Error processing advanced answer submission: " + e.getMessage());
         }
     }
+
+    @PostMapping("/questions/{questionId}/submit/semantic")
+    public ResponseEntity<?> submitAnswerSemantic(@PathVariable UUID questionId, @RequestBody Map<String, String> request) {
+        try {
+            Optional<Question> questionOpt = questionService.getQuestionById(questionId);
+            if (questionOpt.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Question question = questionOpt.get();
+            String userAnswer = request.get("answer");
+            
+            if (userAnswer == null || userAnswer.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Answer cannot be empty");
+            }
+
+            // Call GenAI service for semantic feedback
+            Map<String, Object> feedbackResponse = genAIService.generateSemanticFeedback(
+                question.getText(),
+                userAnswer,
+                question.getSampleSolution()
+            );
+            
+            // Add additional context to response
+            Map<String, Object> response = new HashMap<>(feedbackResponse);
+            response.put("questionId", questionId);
+            response.put("userAnswer", userAnswer);
+            response.put("questionText", question.getText());
+            response.put("chapterId", question.getChapter().getId());
+            response.put("chapterTitle", question.getChapter().getName());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error processing semantic answer submission: " + e.getMessage());
+        }
+    }
     
     @GetMapping("/genai/health")
     public ResponseEntity<?> getGenAIHealth() {

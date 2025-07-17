@@ -29,6 +29,9 @@ jobs:
           - service: flashcard-service
             context: flashcard-service
             dockerfile: flashcard-service/Dockerfile
+          - service: genai-service
+            context: genai-service
+            dockerfile: genai-service/Dockerfile
 
     steps:
       - uses: actions/checkout@v4
