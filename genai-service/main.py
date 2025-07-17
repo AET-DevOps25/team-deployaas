@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 import datetime
 import uvicorn
 from semantic_analyzer import get_semantic_analyzer
+from prometheus_fastapi_instrumentator import Instrumentator
 
 # Environment configuration
 WEBUI_API_KEY = os.getenv("WEBUI_API_KEY")
@@ -18,6 +19,8 @@ app = FastAPI(
     description="Service that generates AI-powered feedback for quiz answers using Open WebUI",
     version="1.0.0"
 )
+
+Instrumentator().instrument(app).expose(app)
 
 
 class FeedbackRequest(BaseModel):

@@ -156,6 +156,8 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRouter, RouterLink } from "vue-router";
+import api from "./utils/api.js"; // Ensure this path is correct
+
 import {
   ArrowLeft as ArrowLeftIcon,
   Plus as PlusIcon,
@@ -165,7 +167,6 @@ import {
   Trash as TrashIcon,
   Download as DownloadIcon,
 } from "lucide-vue-next";
-import { apiBaseUrl } from "@/config/api.js";
 
 const router = useRouter();
 
@@ -178,11 +179,11 @@ const editingDeck = ref(null);
 const deckToDelete = ref(null);
 const deckForm = ref({ name: "" });
 
+// This will now hold the dynamically fetched user ID from localStorage
+const authenticatedUserId = ref(null);
+
 // Computed
 const backButtonText = computed(() => "Back to Home");
-
-// Mock user ID - in a real app, this would come from auth
-const userId = "00000000-0000-0000-0000-000000000001";
 
 // Methods
 const goBack = () => {
@@ -192,12 +193,25 @@ const goBack = () => {
 const loadDecks = async () => {
   try {
     loading.value = true;
-    const response = await fetch(`${apiBaseUrl.flashcard}/decks/user/${userId}`);
-    if (response.ok) {
-      decks.value = await response.json();
+    
+    // Crucial check: Ensure authenticatedUserId is available
+    if (!authenticatedUserId.value) {
+      console.warn("User ID not found, cannot load decks. Redirecting to login...");
+      router.push('/login'); // Redirect to login if user ID is missing
+      return; // Stop execution
     }
+
+    // Use the dynamically obtained authenticatedUserId
+    // CORRECTED: Removed '/api/flashcard' prefix because it's in api.js baseURL
+    const response = await api.get(`/decks/user/${authenticatedUserId.value}`);
+    decks.value = response.data;
   } catch (error) {
     console.error("Error loading decks:", error);
+    if (error.response && error.response.data && error.response.data.message) {
+        alert(`Error loading decks: ${error.response.data.message}`);
+    } else {
+        alert("Failed to load decks. Please try again.");
+    }
   } finally {
     loading.value = false;
   }
@@ -206,27 +220,36 @@ const loadDecks = async () => {
 const submitDeck = async () => {
   try {
     const isEditing = editingDeck.value !== null;
-    const url = isEditing 
-      ? `${apiBaseUrl.flashcard}/decks/${editingDeck.value.id}`
-      : `${apiBaseUrl.flashcard}/decks`;
     
-    const method = isEditing ? "PUT" : "POST";
+    // Crucial check: Ensure authenticatedUserId is available for deck creation/update
+    if (!authenticatedUserId.value) {
+      console.warn("User ID not found, cannot save deck. Please log in.");
+      alert("Please log in to create or update decks.");
+      return;
+    }
+
+    // For new decks, pass the userId in the request body
     const body = isEditing 
       ? { name: deckForm.value.name }
-      : { userId, name: deckForm.value.name };
+      : { userId: authenticatedUserId.value, name: deckForm.value.name };
 
-    const response = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (response.ok) {
-      await loadDecks();
-      cancelDeckForm();
+    if (isEditing) {
+      // CORRECTED: Removed '/api/flashcard' prefix
+      await api.put(`/decks/${editingDeck.value.id}`, body);
+    } else {
+      // CORRECTED: Removed '/api/flashcard' prefix
+      await api.post(`/decks`, body); 
     }
+
+    await loadDecks(); 
+    cancelDeckForm(); 
   } catch (error) {
     console.error("Error saving deck:", error);
+    if (error.response && error.response.data && error.response.data.message) {
+      alert(`Error: ${error.response.data.message}`);
+    } else {
+      alert("Failed to save deck. Please try again.");
+    }
   }
 };
 
@@ -243,17 +266,21 @@ const deleteDeckConfirm = (deck) => {
 
 const deleteDeck = async () => {
   try {
-    const response = await fetch(`${apiBaseUrl.flashcard}/decks/${deckToDelete.value.id}`, {
-      method: "DELETE",
-    });
-
-    if (response.ok) {
-      await loadDecks();
+    // Crucial check: Ensure authenticatedUserId is available for deletion (optional, but good practice if backend checks ownership)
+    if (!authenticatedUserId.value) {
+      console.warn("User ID not found, cannot delete deck. Please log in.");
+      alert("Please log in to delete decks.");
+      return;
     }
+    // CORRECTED: Removed '/api/flashcard' prefix
+    await api.delete(`/decks/${deckToDelete.value.id}`);
+
+    await loadDecks(); 
     showDeleteModal.value = false;
     deckToDelete.value = null;
   } catch (error) {
     console.error("Error deleting deck:", error);
+    alert("Failed to delete deck. Please try again.");
   }
 };
 
@@ -267,50 +294,38 @@ const manageDeck = (deckId) => {
 
 const exportDeckToAnki = async (deck) => {
   try {
-    // Fetch flashcards for the deck
-    const response = await fetch(`${apiBaseUrl.flashcard}/decks/${deck.id}/flashcards`);
-    if (!response.ok) {
-      throw new Error('Failed to fetch flashcards');
-    }
-    
-    const flashcards = await response.json();
+    // CORRECTED: Removed '/api/flashcard' prefix
+    const response = await api.get(`/decks/${deck.id}/flashcards`);
+    const flashcards = response.data; 
     
     if (!flashcards || flashcards.length === 0) {
       alert('No flashcards found in this deck to export.');
       return;
     }
 
-    // Create Anki-compatible text format
-    // Format: "Front\tBack\n" (tab-separated values)
     let ankiText = "";
     
     flashcards.forEach(card => {
-      // Escape tabs and newlines in the content
       const front = card.front.replace(/\t/g, " ").replace(/\n/g, "<br>");
       const back = card.back.replace(/\t/g, " ").replace(/\n/g, "<br>");
-      
       ankiText += `${front}\t${back}\n`;
     });
 
-    // Create and download the file
     const blob = new Blob([ankiText], { type: 'text/plain;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     
-    // Use deck name for filename, sanitized for file system
     const sanitizedDeckName = deck.name
       .replace(/[^a-z0-9]/gi, '_')
       .toLowerCase();
     link.download = `${sanitizedDeckName}_anki_export.txt`;
     
-    // Trigger download
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
-    // Show success message
     alert(`Successfully exported ${flashcards.length} flashcards from "${deck.name}" to Anki format!\n\nTo import into Anki:\n1. Open Anki\n2. File > Import\n3. Select the downloaded file\n4. Choose "Tab" as field separator\n5. Map fields to Front/Back`);
     
   } catch (error) {
@@ -327,6 +342,19 @@ const cancelDeckForm = () => {
 
 // Load data on mount
 onMounted(() => {
-  loadDecks();
+  // Retrieve userId directly from localStorage
+  const storedUserId = localStorage.getItem('userId');
+  if (storedUserId) {
+    authenticatedUserId.value = storedUserId;
+    loadDecks(); // Call loadDecks now that userId is available
+  } else {
+    // If no user ID is found, redirect to the login page
+    console.log("No user ID found in localStorage. Redirecting to login.");
+    router.push('/login');
+  }
 });
 </script>
+
+<style scoped>
+/* Any specific styles for this component */
+</style>

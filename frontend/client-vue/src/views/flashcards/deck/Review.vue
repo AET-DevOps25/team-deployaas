@@ -1,6 +1,5 @@
 <template>
   <div data-theme="lofi" class="min-h-screen bg-base-200 flex flex-col">
-    <!-- Navbar -->
     <nav class="navbar bg-base-100 px-6 py-4 shadow-sm">
       <div class="navbar-start">
         <button @click="goBack" class="btn btn-ghost">
@@ -18,15 +17,12 @@
       </div>
     </nav>
 
-    <!-- Main Content -->
     <div class="flex-1 flex items-center justify-center px-6 py-8">
-      <!-- Loading State -->
       <div v-if="loading" class="text-center">
         <span class="loading loading-spinner loading-lg mb-4"></span>
         <p class="text-base-content/70">Loading flashcards...</p>
       </div>
 
-      <!-- Empty State -->
       <div v-else-if="flashcards.length === 0" class="text-center">
         <BookOpenIcon class="w-16 h-16 mx-auto text-base-content/30 mb-4" />
         <h2 class="text-2xl font-bold mb-2">No Flashcards in This Deck</h2>
@@ -38,9 +34,7 @@
         </button>
       </div>
 
-      <!-- Flashcard Display -->
       <div v-else class="w-full max-w-2xl">
-        <!-- Progress Bar -->
         <div class="mb-6">
           <div class="flex justify-between text-sm text-base-content/70 mb-2">
             <span>Progress</span>
@@ -53,7 +47,6 @@
           ></progress>
         </div>
 
-        <!-- Flashcard -->
         <div class="card bg-base-100 shadow-xl min-h-96">
           <div class="card-body flex items-center justify-center text-center">
             <div v-if="!showAnswer" class="w-full">
@@ -88,7 +81,6 @@
           </div>
         </div>
 
-        <!-- Navigation -->
         <div class="flex justify-between mt-6">
           <button 
             @click="previousCard" 
@@ -122,7 +114,6 @@
       </div>
     </div>
 
-    <!-- Study Complete Modal -->
     <dialog ref="completeModal" class="modal" :class="{ 'modal-open': showCompleteModal }">
       <div class="modal-box text-center">
         <h3 class="font-bold text-lg mb-4">🎉 Study Session Complete!</h3>
@@ -155,6 +146,9 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+// Import your configured Axios instance. Adjust the path if needed.
+import api from "../utils/api.js"; 
+
 import {
   ArrowLeft as ArrowLeftIcon,
   BookOpen as BookOpenIcon,
@@ -166,7 +160,9 @@ import {
   Shuffle as ShuffleIcon,
   RotateCcw as RotateCcwIcon,
 } from "lucide-vue-next";
-import { apiBaseUrl } from "@/config/api.js";
+
+// You no longer need apiBaseUrl if your axios instance is configured with a base URL
+// import { apiBaseUrl } from "@/config/api.js"; 
 
 const route = useRoute();
 const router = useRouter();
@@ -194,19 +190,22 @@ const loadDeck = async () => {
     loading.value = true;
     const deckId = route.params.deckId;
     
-    // Load deck info
-    const deckResponse = await fetch(`${apiBaseUrl.flashcard}/decks/${deckId}`);
-    if (deckResponse.ok) {
-      deck.value = await deckResponse.json();
-    }
+    // Load deck info using Axios
+    const deckResponse = await api.get(`/decks/${deckId}`);
+    deck.value = deckResponse.data;
 
-    // Load flashcards
-    const flashcardsResponse = await fetch(`${apiBaseUrl.flashcard}/decks/${deckId}/flashcards`);
-    if (flashcardsResponse.ok) {
-      flashcards.value = await flashcardsResponse.json();
-    }
+    // Load flashcards using Axios
+    const flashcardsResponse = await api.get(`/decks/${deckId}/flashcards`);
+    flashcards.value = flashcardsResponse.data;
+
   } catch (error) {
-    console.error("Error loading deck:", error);
+    console.error("Error loading deck or flashcards for review:", error);
+    // Handle specific error types, e.g., 404 for not found, 403 for forbidden
+    if (error.response && error.response.status === 404) {
+      console.warn("Deck for review not found.");
+      // Optionally, redirect to the decks list if the deck doesn't exist
+      // router.push('/flashcards'); 
+    }
   } finally {
     loading.value = false;
   }
@@ -260,6 +259,7 @@ const resetProgress = () => {
 const restartSession = () => {
   resetProgress();
   showCompleteModal.value = false;
+  shuffleDeck(); // Optionally shuffle again for a fresh session
 };
 
 // Load data on mount
@@ -267,3 +267,7 @@ onMounted(() => {
   loadDeck();
 });
 </script>
+
+<style scoped>
+/* Any specific styles for this component */
+</style>
