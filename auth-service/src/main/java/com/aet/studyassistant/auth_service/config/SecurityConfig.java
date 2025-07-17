@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/api/auth/**").permitAll() // This line
+                        .requestMatchers("/", "/api/auth/**", "/actuator/**").permitAll() // This line
                         .anyRequest().authenticated())
                 .sessionManagement(sess -> sess
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -46,7 +46,7 @@ public class SecurityConfig {
         configuration.addAllowedOrigin("http://localhost:3000"); // Frontend URL
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
