@@ -1,7 +1,4 @@
 -- Insert test users
-INSERT INTO users (user_id, name, email, password_hash) VALUES 
-    ('00000000-0000-0000-0000-000000000001', 'Test User', 'test@example.com', '$2a$10$dummyhashfordemopurposes');
-
 -- Insert initial course data
 INSERT INTO courses (course_id, title) VALUES 
     ('550e8400-e29b-41d4-a716-446655440000', 'DevOps Fundamentals'),

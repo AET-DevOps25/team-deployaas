@@ -10,7 +10,8 @@
         <RouterLink to="/home" class="btn btn-ghost">Home</RouterLink>
       </div>
       <div class="flex-none">
-        <button class="btn btn-primary">Sign In</button>
+        <RouterLink to="/login" class="btn btn-outline btn-primary">Sign In</RouterLink>
+        <RouterLink to="/register" class="btn btn-primary">Sign Up</RouterLink>
       </div>
     </nav>
 
@@ -27,7 +28,7 @@
           learning.
         </p>
         <div class="mt-8 flex justify-center">
-          <RouterLink to="/home" class="btn btn-primary btn-lg">
+          <RouterLink to="/register" class="btn btn-primary btn-lg">
             Get Started
           </RouterLink>
         </div>

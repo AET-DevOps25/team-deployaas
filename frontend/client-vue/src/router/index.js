@@ -4,7 +4,11 @@ import { createRouter, createWebHistory } from "vue-router";
 // Landing page
 import LandingPage from "../views/LandingPage.vue";
 
-// Home page (for authenticated users)
+// Auth pages
+import RegisterPage from "../views/RegisterPage.vue";
+import LoginPage from "../views/LoginPage.vue";
+
+// Home page (authenticated)
 import HomePage from "../views/HomePage.vue";
 
 // Courses
@@ -31,53 +35,75 @@ import Quizzes from "../views/quizzes/Index.vue";
 import Quiz from "../views/quiz/Index.vue";
 
 const routes = [
-  // landing
+  // Public routes
   { path: "/", component: LandingPage },
+  { path: "/register", component: RegisterPage },
+  { path: "/login", component: LoginPage },
 
-  // home (for authenticated users)
-  { path: "/home", component: HomePage },
-
-  // courses
-  { path: "/courses", component: Courses },
+  // Authenticated routes
+  { path: "/home", component: HomePage, meta: { requiresAuth: true } },
+  { path: "/courses", component: Courses, meta: { requiresAuth: true } },
   {
     path: "/courses/:courseId",
     component: CoursePage,
+    meta: { requiresAuth: true },
     children: [
       {
         path: "chapters",
         component: CourseChapters,
-        children: [{ path: ":chapterId", component: CourseChapterPage }],
+        children: [
+          {
+            path: ":chapterId",
+            component: CourseChapterPage,
+          },
+        ],
+      },
+    ],
+  },
+  { path: "/quiz/:chapterId", component: Quiz, meta: { requiresAuth: true } },
+  { path: "/chapters", component: Chapters, meta: { requiresAuth: true } },
+  {
+    path: "/chapters/:id",
+    component: ChapterPage,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: "results",
+        component: ChapterResults,
       },
     ],
   },
 
-  // quiz
-  { path: "/quiz/:chapterId", component: Quiz },
-
-  // chapters
-  { path: "/chapters", component: Chapters },
-  {
-    path: "/chapters/:id",
-    component: ChapterPage,
-    children: [{ path: "results", component: ChapterResults }],
-  },
-
   // flashcards
-  { path: "/flashcards", component: Flashcards },
-  { path: "/flashcards/deck/:deckId", component: FlashcardDeck },
-  { path: "/flashcards/deck/:deckId/review", component: FlashcardReview },
-  { path: "/flashcards/generated", component: Generated },
-  { path: "/flashcards/generated/loading", component: Loading },
+  { path: "/flashcards", component: Flashcards, meta: { requiresAuth: true } },
+  { path: "/flashcards/deck/:deckId", component: FlashcardDeck, meta: { requiresAuth: true } },
+  { path: "/flashcards/deck/:deckId/review", component: FlashcardReview, meta: { requiresAuth: true } },
+  { path: "/flashcards/generated", component: Generated, meta: { requiresAuth: true } },
+  { path: "/flashcards/generated/loading", component: Loading, meta: { requiresAuth: true } },
 
-  // progress & quizzes
-  { path: "/progress", component: Progress },
-  { path: "/quizzes", component: Quizzes },
+  { path: "/progress", component: Progress, meta: { requiresAuth: true } },
+  { path: "/quizzes", component: Quizzes, meta: { requiresAuth: true } },
 
-  // fallback
+  // Catch-all
   { path: "/:pathMatch(.*)*", redirect: "/" },
 ];
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
   routes,
 });
+
+// Add global navigation guard
+router.beforeEach((to, from, next) => {
+  const isAuthenticated = !!localStorage.getItem("token");
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    next("/login");
+  } else if ((to.path === "/login" || to.path === "/register") && isAuthenticated) {
+    next("/home");
+  } else {
+    next();
+  }
+});
+
+export default router;
