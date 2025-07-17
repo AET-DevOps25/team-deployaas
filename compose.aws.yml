@@ -1,23 +1,32 @@
+version: '3.8'
+
 services:
+  # Traefik Reverse Proxy for external access and HTTPS
   reverse-proxy:
     image: traefik:v3.4
+    container_name: traefik
     command:
       - "--providers.docker=true"
-      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.exposedByDefault=false" 
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.letsencrypt.acme.email=admin@you.com"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@you.com" # IMPORTANT: Replace with your actual email
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      # Optional: Enable Traefik Dashboard (for debugging Traefik itself)
+      # - "--api.dashboard=true"
+      # - "--api.insecure=true" # ONLY FOR DEVELOPMENT - DO NOT USE IN PRODUCTION
     ports:
       - "80:80"
       - "443:443"
+      # Optional: Expose Traefik Dashboard if enabled above (e.g., for http://localhost:8080/dashboard/)
+      # - "8080:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./letsencrypt:/letsencrypt
+      - ./letsencrypt:/letsencrypt # For Let's Encrypt certificates
     restart: unless-stopped
     networks:
       - traefik
@@ -26,7 +35,7 @@ services:
     image: postgres:14
     container_name: studyapp_db
     env_file:
-      - .env.prod
+      - .env.prod # Ensure this file contains POSTGRES_USER and POSTGRES_PASSWORD
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./database/initdb:/docker-entrypoint-initdb.d
@@ -39,12 +48,24 @@ services:
     container_name: studyapp_pgadmin
     env_file:
       - .env.prod
-    ports:
-      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@you.com
+      PGADMIN_DEFAULT_PASSWORD: AdminPass123! # IMPORTANT: Change for production!
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    # Removed direct host port mapping if using Traefik for external access
+    # ports:
+    #   - "8080:80"
     depends_on:
       - db
     volumes:
       - ./database/pgadmin4/servers.json:/pgadmin4/servers.json:ro
+    labels: # Traefik labels for pgadmin
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.pgadmin.rule=Host(`pgadmin.${DOMAIN_NAME:-localhost}`)" # Use your actual domain or a local hostname from .env.prod
+      - "traefik.http.services.pgadmin.loadbalancer.server.port=80" # pgadmin listens on 80 internally
+      - "traefik.http.routers.pgadmin.entrypoints=websecure"
+      - "traefik.http.routers.pgadmin.tls.certresolver=letsencrypt"
     restart: always
     networks:
       - traefik
@@ -61,11 +82,14 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+    # Removed direct host port mapping if using Traefik for external access
+    # ports:
+    #   - "8083:8083"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
-      - "traefik.http.routers.auth.rule=Host(`${AUTH_HOST}`)"
-      - "traefik.http.services.auth.loadbalancer.server.port=8083"
+      - "traefik.http.routers.auth.rule=Host(`${AUTH_HOST}`)" # Use AUTH_HOST from .env.prod
+      - "traefik.http.services.auth.loadbalancer.server.port=8083" # Auth service listens on 8083 internally
       - "traefik.http.routers.auth.entrypoints=websecure"
       - "traefik.http.routers.auth.tls.certresolver=letsencrypt"
     restart: always
@@ -85,13 +109,15 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
-      - GENAI_SERVICE_URL=http://genai-service:5001
-
+      - GENAI_SERVICE_URL=http://genai-service:5001 # Internal communication uses service name and internal port
+    # Removed direct host port mapping if using Traefik for external access
+    # ports:
+    #   - "8081:8081"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
-      - "traefik.http.routers.quiz.rule=Host(`${QUIZ_HOST}`)"
-      - "traefik.http.services.quiz.loadbalancer.server.port=8081"
+      - "traefik.http.routers.quiz.rule=Host(`${QUIZ_HOST}`)" # Use QUIZ_HOST from .env.prod
+      - "traefik.http.services.quiz.loadbalancer.server.port=8081" # Quiz service listens on 8081 internally
       - "traefik.http.routers.quiz.entrypoints=websecure"
       - "traefik.http.routers.quiz.tls.certresolver=letsencrypt"
     restart: always
@@ -110,11 +136,14 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+    # Removed direct host port mapping if using Traefik for external access
+    # ports:
+    #   - "8082:8082"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
-      - "traefik.http.routers.flashcard.rule=Host(`${FLASHCARD_HOST}`)"
-      - "traefik.http.services.flashcard.loadbalancer.server.port=8082"
+      - "traefik.http.routers.flashcard.rule=Host(`${FLASHCARD_HOST}`)" # Use FLASHCARD_HOST from .env.prod
+      - "traefik.http.services.flashcard.loadbalancer.server.port=8082" # Flashcard service listens on 8082 internally
       - "traefik.http.routers.flashcard.entrypoints=websecure"
       - "traefik.http.routers.flashcard.tls.certresolver=letsencrypt"
     restart: always
@@ -127,14 +156,24 @@ services:
     env_file:
       - .env.prod
     environment:
-      - WEBUI_API_KEY=${WEBUI_API_KEY}
-      - PORT=5001
+      - WEBUI_API_KEY=${WEBUI_API_KEY} # Ensure this is in your .env.prod file
+      - PORT=5001 # GenAI service listens on 5001 internally
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
       interval: 30s
       timeout: 30s
       retries: 3
       start_period: 30s
+    # Removed direct host port mapping if using Traefik for external access
+    # ports:
+    #   - "5001:5001"
+    labels: # Traefik labels for genai-service
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.genai.rule=Host(`${GENAI_HOST}`)" # Use GENAI_HOST from .env.prod
+      - "traefik.http.services.genai.loadbalancer.server.port=5001"
+      - "traefik.http.routers.genai.entrypoints=websecure"
+      - "traefik.http.routers.genai.tls.certresolver=letsencrypt"
     restart: always
     networks:
       - traefik
@@ -149,11 +188,14 @@ services:
       - quiz-service
       - flashcard-service
       - genai-service
+    # Removed direct host port mapping if using Traefik for external access
+    # ports:
+    #   - "3000:80"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
-      - "traefik.http.routers.client.rule=Host(`${CLIENT_HOST}`)"
-      - "traefik.http.services.client.loadbalancer.server.port=3000"
+      - "traefik.http.routers.client.rule=Host(`${CLIENT_HOST}`)" # Use CLIENT_HOST from .env.prod
+      - "traefik.http.services.client.loadbalancer.server.port=80" # Vue client serves on port 80 internally
       - "traefik.http.routers.client.entrypoints=websecure"
       - "traefik.http.routers.client.tls.certresolver=letsencrypt"
       - "traefik.http.middlewares.client-compress.compress=true"
@@ -161,33 +203,67 @@ services:
     restart: always
     networks:
       - traefik
-  
+
+  # Prometheus for metrics collection
   prometheus:
     image: prom/prometheus:v2.52.0
     container_name: prometheus
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    ports:
+      - ./prometheus/prometheus.rules.yml:/etc/prometheus/prometheus.rules.yml:ro # Mount alert rules
+      - prometheus_data:/prometheus # Persistent storage for Prometheus data
+    ports: # Expose Prometheus UI directly
       - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on: # Ensure application services are up before Prometheus tries to scrape
+      - auth-service
+      - quiz-service
+      - flashcard-service
+      - genai-service
+    networks: # Prometheus must be on the same network as services it scrapes
+      - traefik
 
+  # Grafana for visualization
   grafana:
     image: grafana/grafana:10.2.2
     container_name: grafana
-    ports:
-      - "3001:3000"  
+    ports: # Expose Grafana UI directly
+      - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin # IMPORTANT: Change for production!
     depends_on:
       - prometheus
     volumes:
       - grafana-storage:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/provisioning:/etc/grafana/provisioning # Mount your provisioning folders
+    networks: # Grafana needs to be on this network to access Prometheus
+      - traefik
 
+  # Alertmanager for notifications
+  alertmanager:
+    image: prom/alertmanager:v0.27.0 # Pin to a stable version
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro # Mount Alertmanager config
+      - alertmanager_data:/data # Persistent storage for Alertmanager data
+    ports: # Expose Alertmanager UI directly
+      - "9093:9093"
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/data'
+    depends_on:
+      - prometheus # Alertmanager needs Prometheus to be up to receive alerts
+    networks: # Alertmanager needs to be on the same network as Prometheus
+      - traefik
 
 volumes:
   pgdata:
-  grafana-storage: 
+  grafana-storage:
+  prometheus_data: # Define the volume for Prometheus data
+  alertmanager_data: # Define the volume for Alertmanager data
 
 networks:
   traefik:

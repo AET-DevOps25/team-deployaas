@@ -1,0 +1,57 @@
+groups:
+  - name: service_availability
+    rules:
+      # Alert: Service Down (for all your backend services)
+      - alert: ServiceDown
+        expr: up{job=~"quiz-service|flashcard-service|auth-service|genai-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is Down"
+          description: "The {{ $labels.job }} (instance {{ $labels.instance }}) has been down for more than 1 minute. Check container status."
+
+  - name: service_performance
+    rules:
+      # Alert: Spring Boot Service High Latency (Slow Response Time)
+      # This rule covers Quiz, Flashcard, and Auth services
+      - alert: SpringBootServiceHighLatency
+        expr: histogram_quantile(0.90, sum by (le, job) (rate(http_server_requests_seconds_bucket{job=~"quiz-service|flashcard-service|auth-service"}[5m]))) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Latency for {{ $labels.job }}"
+          description: "The 90th percentile request latency for {{ $labels.job }} (instance {{ $labels.instance }}) is above 0.5 seconds for 2 minutes."
+
+      # Alert: Spring Boot Service High Error Rate (5xx HTTP status codes)
+      # This rule covers Quiz, Flashcard, and Auth services
+      - alert: SpringBootServiceHighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{job=~"quiz-service|flashcard-service|auth-service", status="5xx"}[5m])) / sum(rate(http_server_requests_seconds_count{job=~"quiz-service|flashcard-service|auth-service"}[5m])) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High Error Rate for {{ $labels.job }}"
+          description: "The {{ $labels.job }} (instance {{ $labels.instance }}) is returning more than 5% 5xx errors for 1 minute."
+
+      # Alert: GenAI Service High Latency
+      # This uses metrics from `prometheus_fastapi_instrumentator`
+      - alert: GenAIServiceHighLatency
+        expr: histogram_quantile(0.90, sum by (le, job) (rate(http_request_duration_seconds_bucket{job="genai-service"}[5m]))) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Latency for GenAI Service"
+          description: "The 90th percentile request latency for GenAI Service (instance {{ $labels.instance }}) is above 0.5 seconds for 2 minutes."
+
+      # Alert: GenAI Service High Error Rate
+      - alert: GenAIServiceHighErrorRate
+        expr: sum(rate(http_requests_total{job="genai-service", status_code=~"5.."}[5m])) / sum(rate(http_requests_total{job="genai-service"}[5m])) > 0.05
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High Error Rate for GenAI Service"
+          description: "The GenAI Service (instance {{ $labels.instance }}) is returning more than 5% 5xx errors for 1 minute."
