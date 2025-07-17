@@ -4,6 +4,7 @@ import com.aet.studyassistant.quiz_service.dto.CourseDTO;
 import com.aet.studyassistant.quiz_service.model.Chapter;
 import com.aet.studyassistant.quiz_service.model.Course;
 import com.aet.studyassistant.quiz_service.model.Question;
+import com.aet.studyassistant.quiz_service.security.JwtUtil;
 import com.aet.studyassistant.quiz_service.service.ChapterService;
 import com.aet.studyassistant.quiz_service.service.CourseService;
 import com.aet.studyassistant.quiz_service.service.GenAIService;
@@ -13,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +25,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 
 @WebMvcTest(QuizController.class)
 class QuizControllerTest {
@@ -55,7 +59,11 @@ class QuizControllerTest {
     @MockBean
     private GenAIService genAIService;
 
+    @MockBean
+    private JwtUtil jwtUtil;
+
     @Test
+    @WithMockUser
     void testConnectionReturnsSuccessMessage() throws Exception {
         // Arrange - No specific setup needed for this simple endpoint
 
@@ -66,6 +74,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getCoursesReturnsAllCourses() throws Exception {
         // Arrange
         List<Course> mockCourses = Arrays.asList(
@@ -85,6 +94,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getCoursesDetailedReturnsCoursesWithMetadata() throws Exception {
         // Arrange
         Course mockCourse = createMockCourse(TEST_COURSE_TITLE);
@@ -109,6 +119,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getCourseByIdWhenCourseExistsReturnsCorrectCourse() throws Exception {
         // Arrange
         UUID courseId = UUID.randomUUID();
@@ -126,6 +137,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getCourseByIdWhenCourseDoesNotExistReturnsNotFound() throws Exception {
         // Arrange
         UUID courseId = UUID.randomUUID();
@@ -139,6 +151,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getChaptersReturnsAllChapters() throws Exception {
         // Arrange
         List<Chapter> mockChapters = Arrays.asList(
@@ -158,6 +171,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getChaptersByCourseReturnsCorrectChapters() throws Exception {
         // Arrange
         UUID courseId = UUID.randomUUID();
@@ -177,6 +191,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getQuestionsByChapterReturnsCorrectQuestions() throws Exception {
         // Arrange
         UUID chapterId = UUID.randomUUID();
@@ -198,6 +213,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void submitAnswerWithValidInputReturnsSuccessfulResponse() throws Exception {
         // Arrange
         UUID questionId = UUID.randomUUID();
@@ -215,6 +231,7 @@ class QuizControllerTest {
 
         // Act & Assert
         mockMvc.perform(post(API_QUIZ_BASE + "/questions/" + questionId + "/submit")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestBody)))
                 .andExpect(status().isOk())
@@ -227,6 +244,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void submitAnswerWithEmptyAnswerReturnsBadRequest() throws Exception {
         // Arrange
         UUID questionId = UUID.randomUUID();
@@ -234,6 +252,7 @@ class QuizControllerTest {
 
         // Act & Assert
         mockMvc.perform(post(API_QUIZ_BASE + "/questions/" + questionId + "/submit")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestBody)))
                 .andExpect(status().isBadRequest())
@@ -244,6 +263,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void submitAnswerWithNonExistentQuestionReturnsNotFound() throws Exception {
         // Arrange
         UUID questionId = UUID.randomUUID();
@@ -253,6 +273,7 @@ class QuizControllerTest {
 
         // Act & Assert
         mockMvc.perform(post(API_QUIZ_BASE + "/questions/" + questionId + "/submit")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestBody)))
                 .andExpect(status().isNotFound());
@@ -262,6 +283,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getGenAIHealthWhenServiceIsAvailableReturnsHealthyStatus() throws Exception {
         // Arrange
         when(genAIService.isGenAIServiceAvailable()).thenReturn(true);
@@ -278,6 +300,7 @@ class QuizControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getGenAIHealthWhenServiceIsUnavailableReturnsUnavailableStatus() throws Exception {
         // Arrange
         when(genAIService.isGenAIServiceAvailable()).thenReturn(false);
