@@ -7,8 +7,8 @@ on:
     branches: ["**"]
 
 jobs:
-  test:
-    name: Run Tests
+  test-java-services:
+    name: Run Java Service Tests
     runs-on: ubuntu-latest
 
     strategy:
@@ -44,3 +44,42 @@ jobs:
         run: |
           cd ${{ matrix.service }}
           ./gradlew test
+
+  test-python-services:
+    name: Run Python Service Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [genai-service]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/test_requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies for ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r test_requirements.txt
+
+      - name: Run tests for ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          export PYTHONPATH=$(pwd)
+          export WEBUI_API_KEY="test_key_for_ci"
+          pytest tests/ -v
