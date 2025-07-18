@@ -58,4 +58,31 @@ spec:
                 name: {{ include "study-assistant.fullname" . }}-genai-service
                 port:
                   number: {{ .Values.genaiService.service.port }}
+          {{- if .Values.prometheus.enabled }}
+          - path: /prometheus
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-prometheus
+                port:
+                  number: {{ .Values.prometheus.service.port }}
+          {{- end }}
+          {{- if .Values.grafana.enabled }}
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-grafana
+                port:
+                  number: {{ .Values.grafana.service.port }}
+          {{- end }}
+          {{- if .Values.alertmanager.enabled }}
+          - path: /alertmanager
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-alertmanager
+                port:
+                  number: {{ .Values.alertmanager.service.port }}
+          {{- end }}
 {{- end }}

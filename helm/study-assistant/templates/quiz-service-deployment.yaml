@@ -29,13 +29,13 @@ spec:
             {{- toYaml .Values.quizService.env | nindent 12 }}
           livenessProbe:
             httpGet:
-              path: /api/quiz/test
+              path: /actuator/health
               port: http
             initialDelaySeconds: 60
             periodSeconds: 30
           readinessProbe:
             httpGet:
-              path: /api/quiz/test
+              path: /actuator/health
               port: http
             initialDelaySeconds: 30
             periodSeconds: 10
