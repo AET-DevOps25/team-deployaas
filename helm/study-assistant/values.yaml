@@ -96,6 +96,8 @@ authService:
       value: https://team-deployaas.student.k8s.aet.cit.tum.de
     - name: JWT_SECRET
       value: "my-secret-key-for-jwt-tokens-which-should-be-longer-and-more-secure"
+    - name: FLASHCARD_SERVICE_URL
+      value: http://study-assistant-flashcard-service:8082
 
 genaiService:
   image:
@@ -111,7 +113,7 @@ genaiService:
     - name: PORT
       value: "5001"
     - name: WEBUI_API_KEY
-      value: "your-api-key-here"
+      value: "sk-de1b5dfd9ef14dc798d1d121a2128512"
 
 # Prometheus configuration
 prometheus:

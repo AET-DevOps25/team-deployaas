@@ -51,8 +51,8 @@ build_and_push_service() {
         return 1
     fi
     
-    # Build the image for multiple platforms
-    docker buildx build --platform linux/amd64,linux/arm64 -t "$image_name" "$dockerfile_path" --push
+    # Build the image for multiple platforms with no cache
+    docker buildx build --no-cache --platform linux/amd64,linux/arm64 -t "$image_name" "$dockerfile_path" --push
     
     if [ $? -eq 0 ]; then
         print_status "Successfully built and pushed ${image_name}"
