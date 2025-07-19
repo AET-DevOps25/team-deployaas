@@ -2,16 +2,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# ======== Variables ========
-variable "vpc_cidr_block" {}
-variable "subnet_1_cidr_block" {}
-variable "avail_zone" {}
-variable "env_prefix" {}
-variable "instance_type" {}
-variable "ssh_key" {}           # path to public key (.pub)
-variable "ssh_private_key" {}   # path to private key (.pem)
-variable "my_ip" {}
-
 # ======== Get latest Amazon Linux 2023 AMI ========
 data "aws_ami" "amazon-linux-image" {
   most_recent = true
