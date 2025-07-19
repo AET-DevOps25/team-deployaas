@@ -48,8 +48,10 @@
           POSTGRES_USER=initexample
           POSTGRES_PASSWORD=initexample
           POSTGRES_DB=initexample
-          OPENAI_API_KEY=
+          OPENAI_API_KEY={{ openai_api_key | default('') }}
           FRONTEND_ORIGIN=http://{{ ansible_host }}:3000
+          JWT_SECRET=I2GHcCfU2UFQJ/S1yiPYCyT5J5lGdg3vdxNwuCHXyGkRN0g6KEiTGZ0PGBgAhO1e79Xzo2fflk7P1b5mNyJUyg==
+          WEBUI_API_KEY=sk-de1b5dfd9ef14dc798d1d121a2128512
         owner: "{{ deployment_user }}"
         group: "{{ deployment_user }}"
         mode: '0600'
@@ -122,9 +124,12 @@
         - 8081  # Quiz service
         - 8082  # Flashcard service
         - 8083  # Auth service
-        - 8084  # GenAI service
+        - 5001  # GenAI service
         - 5432  # PostgreSQL
         - 8080  # PgAdmin
+        - 9090  # Prometheus
+        - 3001  # Grafana
+        - 9093  # Alertmanager
 
     - name: Check running containers
       shell: sudo docker ps
@@ -143,5 +148,8 @@
           - Quiz Service: http://{{ ansible_host }}:8081
           - Flashcard Service: http://{{ ansible_host }}:8082
           - Auth Service: http://{{ ansible_host }}:8083
-          - GenAI Service: http://{{ ansible_host }}:8084
+          - GenAI Service: http://{{ ansible_host }}:5001
           - PgAdmin: http://{{ ansible_host }}:8080
+          - Prometheus: http://{{ ansible_host }}:9090
+          - Grafana: http://{{ ansible_host }}:3001
+          - Alertmanager: http://{{ ansible_host }}:9093
