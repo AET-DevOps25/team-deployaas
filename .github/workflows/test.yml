@@ -83,3 +83,33 @@ jobs:
           export PYTHONPATH=$(pwd)
           export WEBUI_API_KEY="test_key_for_ci"
           pytest tests/ -v
+
+  test-frontend:
+    name: Run Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/client-vue/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd frontend/client-vue
+          npm ci
+
+      - name: Run frontend tests
+        run: |
+          cd frontend/client-vue
+          npm run test:run
+
+      - name: Build frontend
+        run: |
+          cd frontend/client-vue
+          npm run build
