@@ -38,12 +38,21 @@ jobs:
           CURRENT_IP=$(curl -s ipv4.icanhazip.com)
           echo "current_ip=${CURRENT_IP}/32" >> $GITHUB_OUTPUT
 
-      - name: Setup SSH keys for Terraform
+      - name: Generate SSH keys for Terraform
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/devops.pem
+          # Generate a new SSH key pair specifically for this deployment
+          ssh-keygen -t rsa -b 2048 -f ~/.ssh/devops.pem -N "" -C "github-actions-$(date +%s)"
+          # Copy public key to infrastructure directory for Terraform
+          cp ~/.ssh/devops.pem.pub infrastructure/devops.pub
+          # Set proper permissions
           chmod 600 ~/.ssh/devops.pem
-          ssh-keygen -y -f ~/.ssh/devops.pem > infrastructure/devops.pub
+          chmod 644 ~/.ssh/devops.pem.pub
+          # Verify keys were generated
+          echo "Private key:"
+          head -1 ~/.ssh/devops.pem
+          echo "Public key:"
+          cat infrastructure/devops.pub
 
       - name: Terraform Init
         working-directory: infrastructure
@@ -90,7 +99,8 @@ jobs:
       - name: Run application deployment
         working-directory: infrastructure/ansible
         run: |
-          ansible-playbook -i inventory.ini playbook-deploy.yml
+          ansible-playbook -i inventory.ini playbook-deploy.yml \
+            -e "openai_api_key=${{ secrets.OPENAI_API_KEY }}"
 
       - name: Display deployment info
         run: |
