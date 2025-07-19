@@ -67,34 +67,6 @@ resource "aws_route_table_association" "a-rtb-subnet" {
   route_table_id = aws_route_table.myapp-route-table.id
 }
 
-# ======== IAM Role for Session Manager ========
-resource "aws_iam_role" "ssm_role" {
-  name = "${var.env_prefix}-ssm-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ssm_policy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  role       = aws_iam_role.ssm_role.name
-}
-
-resource "aws_iam_instance_profile" "ssm_profile" {
-  name = "${var.env_prefix}-ssm-profile"
-  role = aws_iam_role.ssm_role.name
-}
-
 # ======== Security Group ========
 resource "aws_security_group" "myapp-sg" {
   name   = "myapp-sg"
@@ -222,7 +194,6 @@ resource "aws_instance" "myapp-server" {
   subnet_id                   = aws_subnet.myapp-subnet-1.id
   vpc_security_group_ids      = [aws_security_group.myapp-sg.id]
   availability_zone           = var.avail_zone
-  iam_instance_profile        = aws_iam_instance_profile.ssm_profile.name
 
   root_block_device {
     volume_type = "gp3"
