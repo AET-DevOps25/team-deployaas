@@ -38,6 +38,13 @@ jobs:
           CURRENT_IP=$(curl -s ipv4.icanhazip.com)
           echo "current_ip=${CURRENT_IP}/32" >> $GITHUB_OUTPUT
 
+      - name: Setup SSH keys for Terraform
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/devops.pem
+          chmod 600 ~/.ssh/devops.pem
+          ssh-keygen -y -f ~/.ssh/devops.pem > infrastructure/devops.pub
+
       - name: Terraform Init
         working-directory: infrastructure
         run: terraform init
@@ -47,6 +54,8 @@ jobs:
         run: |
           terraform plan \
             -var="my_ip=${{ steps.get-ip.outputs.current_ip }}" \
+            -var="ssh_key=devops.pub" \
+            -var="ssh_private_key=~/.ssh/devops.pem" \
             -out=tfplan
 
       - name: Terraform Apply
@@ -59,12 +68,6 @@ jobs:
         run: |
           INSTANCE_IP=$(terraform output -raw server-ip)
           echo "instance_ip=${INSTANCE_IP}" >> $GITHUB_OUTPUT
-
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/devops.pem
-          chmod 600 ~/.ssh/devops.pem
 
       - name: Update Ansible inventory
         run: |

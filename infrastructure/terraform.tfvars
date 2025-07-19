@@ -4,10 +4,4 @@ avail_zone          = "us-east-1a"
 env_prefix          = "devops"
 instance_type       = "t3.medium"
 
-# Replace with your actual IP (with /32 suffix)
-my_ip = "88.217.180.70/32"
-
-# Update to your actual key paths
-
-ssh_key             = "/Users/manuel.tamayo-moreno/.ssh/devops.pub"
-ssh_private_key     = "/Users/manuel.tamayo-moreno/.ssh/devops.pem"
+# Note: my_ip, ssh_key, and ssh_private_key will be provided via command line in GitHub Actions
