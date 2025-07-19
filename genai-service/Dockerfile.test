@@ -1,0 +1,26 @@
+# Test Dockerfile for GenAI Service
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt test_requirements.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r test_requirements.txt
+
+# Copy source code
+COPY . .
+
+# Set environment variables for testing
+ENV PYTHONPATH=/app
+ENV WEBUI_API_KEY=test_key_for_testing
+
+# Run tests
+CMD ["pytest", "-v"]

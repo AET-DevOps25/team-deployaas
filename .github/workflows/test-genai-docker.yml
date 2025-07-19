@@ -1,0 +1,32 @@
+name: GenAI Service Tests (Docker)
+
+on:
+  push:
+    paths:
+      - "genai-service/**"
+    branches: ["**"]
+  pull_request:
+    paths:
+      - "genai-service/**"
+    branches: ["**"]
+
+jobs:
+  test-genai-docker:
+    name: Test GenAI Service in Docker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build test Docker image
+        run: |
+          cd genai-service
+          docker build -f Dockerfile.test -t genai-service-test .
+
+      - name: Run tests in Docker
+        run: |
+          docker run --rm \
+            -e WEBUI_API_KEY="test_key_for_docker_ci" \
+            -v $(pwd)/genai-service:/app \
+            genai-service-test

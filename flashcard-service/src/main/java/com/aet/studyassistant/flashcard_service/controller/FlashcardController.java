@@ -4,7 +4,6 @@ import com.aet.studyassistant.flashcard_service.dto.FlashcardDTO;
 import com.aet.studyassistant.flashcard_service.dto.FlashcardDeckDTO;
 import com.aet.studyassistant.flashcard_service.service.FlashcardService;
 import com.aet.studyassistant.flashcard_service.service.TemplateService;
-import com.aet.studyassistant.flashcard_service.service.QuizServiceClient;
 import com.aet.studyassistant.flashcard_service.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,14 +21,12 @@ public class FlashcardController {
 
     private final FlashcardService flashcardService;
     private final TemplateService templateService;
-    private final QuizServiceClient quizServiceClient;
     private final JwtUtil jwtUtil;
 
     @Autowired
-    public FlashcardController(FlashcardService flashcardService, TemplateService templateService, QuizServiceClient quizServiceClient, JwtUtil jwtUtil) {
+    public FlashcardController(FlashcardService flashcardService, TemplateService templateService, JwtUtil jwtUtil) {
         this.flashcardService = flashcardService;
         this.templateService = templateService;
-        this.quizServiceClient = quizServiceClient;
         this.jwtUtil = jwtUtil;
     }
 
@@ -243,32 +240,5 @@ public class FlashcardController {
         
         boolean deleted = flashcardService.deleteFlashcard(flashcardId);
         return deleted ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
-    }
-
-    // Generate flashcards from quiz content
-    @PostMapping("/generate/chapter/{chapterId}")
-    public ResponseEntity<FlashcardDeckDTO> generateFromChapter(@PathVariable UUID chapterId,
-                                                                @RequestBody Map<String, Object> request,
-                                                                HttpServletRequest httpRequest) {
-        UUID userId = extractUserIdFromRequest(httpRequest);
-        if (userId == null) {
-            return ResponseEntity.status(401).build();
-        }
-        
-        try {
-            String deckName = request.getOrDefault("deckName", "Chapter Flashcards").toString();
-            
-            Optional<FlashcardDeckDTO> deck = flashcardService.generateFlashcardsFromChapter(userId, chapterId, deckName);
-            return deck.map(ResponseEntity::ok).orElse(ResponseEntity.badRequest().build());
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
-    // Check quiz service connectivity
-    @GetMapping("/quiz/health")
-    public ResponseEntity<Map<String, Boolean>> checkQuizServiceHealth() {
-        boolean isAvailable = quizServiceClient.isQuizServiceAvailable();
-        return ResponseEntity.ok(Map.of("quizServiceAvailable", isAvailable));
     }
 }
