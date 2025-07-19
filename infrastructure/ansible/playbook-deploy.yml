@@ -48,7 +48,6 @@
           POSTGRES_USER=initexample
           POSTGRES_PASSWORD=initexample
           POSTGRES_DB=initexample
-          OPENAI_API_KEY={{ openai_api_key | default('') }}
           FRONTEND_ORIGIN=http://{{ ansible_host }}:3000
           JWT_SECRET=I2GHcCfU2UFQJ/S1yiPYCyT5J5lGdg3vdxNwuCHXyGkRN0g6KEiTGZ0PGBgAhO1e79Xzo2fflk7P1b5mNyJUyg==
           WEBUI_API_KEY=sk-de1b5dfd9ef14dc798d1d121a2128512
@@ -100,6 +99,8 @@
         sudo docker-compose up -d
       become_user: "{{ deployment_user }}"
       register: docker_compose_result
+      async: 1800  # 30 minutes timeout
+      poll: 30     # Check every 30 seconds
 
     - name: Check quiz service logs for CORS configuration
       shell: |
