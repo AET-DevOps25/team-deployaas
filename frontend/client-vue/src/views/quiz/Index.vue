@@ -1,23 +1,21 @@
 <template>
   <div data-theme="lofi" class="min-h-screen bg-white">
     <div class="container mx-auto py-8 max-w-4xl">
-      <!-- Loading state -->
       <div v-if="loading" class="text-center py-16">
         <div class="loading loading-spinner loading-lg"></div>
         <h2 class="text-xl mt-4">Loading quiz...</h2>
       </div>
 
-      <!-- No questions state -->
-      <div v-else-if="questions.length === 0" class="text-center py-16">
-        <h2 class="text-2xl mb-4">No questions found for this chapter</h2>
+      <div v-else-if="!chapter || questions.length === 0" class="text-center py-16">
+        <h2 class="text-2xl mb-4">
+          {{ !chapter ? 'Chapter Not Found' : 'No questions found for this chapter' }}
+        </h2>
         <button @click="goBackToCourse" class="btn btn-primary">
           Back to Course
         </button>
       </div>
 
-      <!-- Quiz content -->
       <div v-else>
-        <!-- Header -->
         <div class="mb-8">
           <button
             @click="goBackToCourse"
@@ -28,7 +26,6 @@
           </button>
         </div>
 
-        <!-- Quiz title and progress -->
         <div class="text-center mb-8">
           <h1 class="text-3xl font-bold mb-4">{{ chapter?.name || "Quiz" }}</h1>
           <div
@@ -38,7 +35,6 @@
           </div>
         </div>
 
-        <!-- Question card -->
         <div class="card bg-base-100 shadow-lg mb-8">
           <div class="card-body">
             <h3 class="text-xl font-medium mb-6">{{ currentQuestion.text }}</h3>
@@ -51,52 +47,104 @@
               :disabled="submittingAnswer"
             />
 
-            <!-- Submit Answer Button -->
-            <div class="flex gap-2 mt-4">
-              <button
-                @click="submitAnswer"
-                :disabled="!currentAnswer.trim() || submittingAnswer"
-                class="btn bg-purple-700 text-white hover:bg-purple-800"
+            <div class="flex gap-2 mt-4 flex-wrap">
+              <div
+                class="tooltip tooltip-bottom"
+                data-tip="Get quick AI feedback (2-3 sentences) on your answer quality"
               >
-                <span
-                  v-if="submittingAnswer"
-                  class="loading loading-spinner loading-sm"
-                ></span>
-                {{
-                  submittingAnswer ? "Getting AI Feedback..." : "Submit Answer"
-                }}
-              </button>
+                <button
+                  @click="submitAnswer"
+                  :disabled="!currentAnswer.trim() || submittingAnswer"
+                  class="btn bg-purple-700 text-white hover:bg-purple-800"
+                >
+                  <span
+                    v-if="submittingAnswer"
+                    class="loading loading-spinner loading-sm"
+                  ></span>
+                  {{
+                    submittingAnswer
+                      ? "Getting AI Feedback..."
+                      : "Submit Answer"
+                  }}
+                </button>
+              </div>
 
-              <button
-                @click="submitAdvancedAnswer"
-                :disabled="!currentAnswer.trim() || submittingAnswer"
-                class="btn btn-outline btn-secondary"
+              <div
+                class="tooltip tooltip-bottom"
+                data-tip="Receive detailed AI feedback with strengths, areas for improvement, and specific suggestions"
               >
-                <span
-                  v-if="submittingAnswer"
-                  class="loading loading-spinner loading-sm"
-                ></span>
-                {{ submittingAnswer ? "Analyzing..." : "Semantic Analysis" }}
-              </button>
+                <button
+                  @click="submitAdvancedAnswer"
+                  :disabled="!currentAnswer.trim() || submittingAnswer"
+                  class="btn btn-outline btn-secondary"
+                >
+                  <span
+                    v-if="submittingAnswer"
+                    class="loading loading-spinner loading-sm"
+                  ></span>
+                  {{
+                    submittingAnswer ? "Analyzing..." : "Get Advanced Feedback"
+                  }}
+                </button>
+              </div>
+
+              <div
+                class="tooltip tooltip-bottom"
+                data-tip="Non-AI Semantic analysis comparing key concepts with sample solution (Warning: High similarity doesn't guarantee correctness)"
+              >
+                <button
+                  @click="submitSemanticAnswer"
+                  :disabled="!currentAnswer.trim() || submittingAnswer"
+                  class="btn btn-outline btn-info"
+                >
+                  <span
+                    v-if="submittingAnswer"
+                    class="loading loading-spinner loading-sm"
+                  ></span>
+                  {{ submittingAnswer ? "Analyzing..." : "Check Similarity" }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- AI Feedback Card -->
         <div v-if="currentFeedback" class="card bg-base-100 shadow-lg mb-8">
           <div class="card-body">
             <h3 class="text-xl font-medium mb-4 flex items-center gap-2">
-              <span class="text-purple-700">🤖</span>
-              AI Feedback
+              <span
+                v-if="currentFeedback.model_used?.includes('semantic')"
+                class="text-blue-600"
+                >📊</span
+              >
+              <span v-else class="text-purple-700">🤖</span>
+              <span v-if="currentFeedback.model_used?.includes('semantic')"
+                >Semantic Analysis</span
+              >
+              <span v-else>AI Feedback</span>
             </h3>
 
-            <!-- Main Feedback -->
+            <div
+              v-if="currentFeedback.model_used?.includes('semantic')"
+              class="mb-4"
+            >
+              <h4 class="font-medium mb-2">Similarity Score:</h4>
+              <div class="flex items-center gap-2">
+                <progress
+                  class="progress progress-info w-32"
+                  :value="currentFeedback.score || 0"
+                  max="100"
+                ></progress>
+                <span class="text-sm font-mono"
+                  >{{ (currentFeedback.score || 0).toFixed(1) }}%</span
+                >
+              </div>
+            </div>
+
             <div class="mb-4">
               <h4 class="font-medium mb-2">Overall Feedback:</h4>
               <p class="text-base-content/80">{{ currentFeedback.feedback }}</p>
             </div>
 
-            <!-- Strengths -->
             <div v-if="currentFeedback.strengths?.length" class="mb-4">
               <h4 class="font-medium mb-2 text-green-600">✅ Strengths:</h4>
               <ul class="list-disc list-inside space-y-1">
@@ -110,7 +158,6 @@
               </ul>
             </div>
 
-            <!-- Areas for Improvement -->
             <div v-if="currentFeedback.weaknesses?.length" class="mb-4">
               <h4 class="font-medium mb-2 text-orange-600">
                 ⚠️ Areas for Improvement:
@@ -126,7 +173,6 @@
               </ul>
             </div>
 
-            <!-- Suggestions -->
             <div v-if="currentFeedback.suggestions?.length" class="mb-4">
               <h4 class="font-medium mb-2 text-blue-600">💡 Suggestions:</h4>
               <ul class="list-disc list-inside space-y-1">
@@ -140,7 +186,6 @@
               </ul>
             </div>
 
-            <!-- Model Used -->
             <div class="text-xs text-base-content/60 mt-4">
               Analysis by: {{ currentFeedback.model_used }} |
               {{ formatTimestamp(currentFeedback.timestamp) }}
@@ -148,7 +193,6 @@
           </div>
         </div>
 
-        <!-- Navigation controls -->
         <div class="flex justify-between items-center flex-wrap gap-4 mb-8">
           <button
             @click="handlePreviousQuestion"
@@ -182,7 +226,6 @@
           </button>
         </div>
 
-        <!-- Question navigator dots (if more than one question) -->
         <div v-if="questions.length > 1" class="text-center">
           <div class="flex justify-center gap-2 mb-4">
             <button
@@ -214,11 +257,15 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
+// IMPORTANT: Use your configured API instance here
+import api from "../../utils/api.js"; // Corrected relative path!
+
 import {
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
+  BookOpen as BookOpenIcon, // Added BookOpenIcon for navbar
 } from "lucide-vue-next";
-import { getQuizApiUrl } from "../../config/api.js";
+import { apiBaseUrl } from "../../config/api.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -267,7 +314,7 @@ const handleFinishQuiz = () => {
 };
 
 const goBackToCourse = () => {
-  // Get course ID from chapter data - if we don't have it, go to home
+  // Get course ID from chapter data or default to 'devops' if chapter is null
   const courseId = chapter.value?.courseId;
 
   // Check if we should go back to home instead of courses
@@ -279,8 +326,8 @@ const goBackToCourse = () => {
     // If they came from home or we don't have a course ID, go back to home
     router.push("/home");
   } else {
-    // Otherwise go to the course detail page
-    router.push(`/courses/${courseId}`);
+    // Otherwise go to the course detail page (use courseId if available, else default to general courses)
+    router.push(courseId ? `/courses/${courseId}` : "/courses");
   }
 };
 
@@ -296,30 +343,17 @@ const submitAnswer = async () => {
   const quizApiUrl = getQuizApiUrl();
   
   try {
-    const response = await fetch(
-      `${quizApiUrl}/questions/${currentQuestion.value.id}/submit`,
+    const { data: feedback } = await api.post( // Changed fetch to api.post
+      `/quiz/questions/${currentQuestion.value.id}/submit`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          answer: currentAnswer.value,
-          model_type: "local", // or 'openai' based on preference
-        }),
+        answer: currentAnswer.value,
+        model_type: "local", // or 'openai' based on preference
       }
     );
-
-    if (response.ok) {
-      const feedback = await response.json();
-      feedbacks.value[currentQuestionIndex.value] = feedback;
-    } else {
-      console.error("Failed to submit answer");
-      alert("Failed to get AI feedback. Please try again.");
-    }
+    feedbacks.value[currentQuestionIndex.value] = feedback;
   } catch (error) {
     console.error("Error submitting answer:", error);
-    alert("Error connecting to the feedback service. Please try again.");
+    alert("Failed to get AI feedback. Please try again.");
   } finally {
     submittingAnswer.value = false;
   }
@@ -333,29 +367,39 @@ const submitAdvancedAnswer = async () => {
   const quizApiUrl = getQuizApiUrl();
   
   try {
-    const response = await fetch(
-      `${quizApiUrl}/questions/${currentQuestion.value.id}/submit/advanced`,
+    const { data: feedback } = await api.post( // Changed fetch to api.post
+      `/quiz/questions/${currentQuestion.value.id}/submit/advanced`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          answer: currentAnswer.value,
-        }),
+        answer: currentAnswer.value,
       }
     );
-
-    if (response.ok) {
-      const feedback = await response.json();
-      feedbacks.value[currentQuestionIndex.value] = feedback;
-    } else {
-      console.error("Failed to submit answer for advanced analysis");
-      alert("Failed to get advanced AI feedback. Please try again.");
-    }
+    feedbacks.value[currentQuestionIndex.value] = feedback;
   } catch (error) {
     console.error("Error submitting answer for advanced analysis:", error);
-    alert("Error connecting to the feedback service. Please try again.");
+    alert("Failed to get advanced AI feedback. Please try again.");
+  } finally {
+    submittingAnswer.value = false;
+  }
+};
+
+// Submit answer for semantic similarity analysis
+const submitSemanticAnswer = async () => {
+  if (!currentAnswer.value.trim()) return;
+
+  submittingAnswer.value = true;
+  try {
+    const { data: feedback } = await api.post( // Changed fetch to api.post
+      `/quiz/questions/${currentQuestion.value.id}/submit/semantic`,
+      {
+        answer: currentAnswer.value,
+      }
+    );
+    feedbacks.value[currentQuestionIndex.value] = feedback;
+  } catch (error) {
+    console.error("Error submitting answer for semantic analysis:", error);
+    alert(
+      "Error connecting to the semantic analysis service. Please try again."
+    );
   } finally {
     submittingAnswer.value = false;
   }
@@ -376,20 +420,28 @@ onMounted(async () => {
 
   try {
     // Fetch chapter details
-    const chapterRes = await fetch(
-      `${quizApiUrl}/chapters/${chapterId}`
-    );
-    chapter.value = await chapterRes.json();
+    const { data: chapterData } = await api.get(`/quiz/chapters/${chapterId}`); // Changed fetch to api.get
+    chapter.value = chapterData;
 
     // Fetch questions for the selected chapter
-    const questionsRes = await fetch(
-      `${quizApiUrl}/chapters/${chapterId}/questions`
-    );
-    questions.value = await questionsRes.json();
+    const { data: questionsData } = await api.get(`/quiz/chapters/${chapterId}/questions`); // Changed fetch to api.get
+    questions.value = questionsData;
   } catch (error) {
     console.error("Error fetching quiz data:", error);
+    // Handle specific errors like 403 differently if needed
+    if (error.response && error.response.status === 403) {
+      alert("Access Denied: You do not have permission to view this quiz. Please log in or check your account permissions.");
+      router.push('/login'); // Redirect to login or home if unauthorized
+    } else {
+        // Generic error for any other fetching issue
+        alert("Failed to load quiz data. Please try again later.");
+    }
   } finally {
     loading.value = false;
   }
 });
 </script>
+
+<style scoped>
+/* Add any specific styles for this component here if needed */
+</style>

@@ -1,12 +1,14 @@
+version: '3.8'
+
 services:
   db:
     image: postgres:14
     container_name: studyapp_db
     restart: always
     env_file:
-      - .env
+      - .env # 
     ports:
-      - "5432:5432"
+      - "5432:5432" # Expose PostgreSQL directly on host port 5432
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./database/initdb:/docker-entrypoint-initdb.d
@@ -16,13 +18,13 @@ services:
     container_name: studyapp_pgadmin
     restart: always
     env_file:
-      - .env
+      - .env # 
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@you.com
-      PGADMIN_DEFAULT_PASSWORD: AdminPass123!
+      PGADMIN_DEFAULT_PASSWORD: AdminPass123! # IMPORTANT: Change for production!
       PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
     ports:
-      - "8080:80"
+      - "8080:80" # Expose pgAdmin directly on host port 8080
     depends_on:
       - db
     volumes:
@@ -33,69 +35,60 @@ services:
     container_name: studyapp_quiz_service
     restart: always
     ports:
-      - "8081:8081"
+      - "8081:8081" # Expose Quiz Service directly on host port 8081
     depends_on:
       - db
+      - genai-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:3000}
+      - JWT_SECRET=${JWT_SECRET}
+      - GENAI_SERVICE_URL=http://genai-service:5001 # Internal communication uses service name and internal port
 
   flashcard-service:
     build: ./flashcard-service
     container_name: studyapp_flashcard_service
     restart: always
     ports:
-      - "8082:8082"
+      - "8082:8082" # Expose Flashcard Service directly on host port 8082
     depends_on:
       - db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:3000}
+      - JWT_SECRET=${JWT_SECRET}
 
   auth-service:
     build: ./auth-service
     container_name: studyapp_auth_service
     restart: always
     ports:
-      - "8083:8083"
+      - "8083:8083" # Expose Auth Service directly on host port 8083
     depends_on:
       - db
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
-      - FRONTEND_ORIGIN=${FRONTEND_ORIGIN:-http://localhost:3000}
+      - JWT_SECRET=${JWT_SECRET}
 
   genai-service:
-    build: ./genai
+    build: ./genai-service
     container_name: studyapp_genai_service
     restart: always
     ports:
-      - "8084:8084"
+      - "5001:5001" # Expose GenAI Service directly on host port 5001
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - SERVICE_HOST=0.0.0.0
-      - SERVICE_PORT=8084
-      - LOG_LEVEL=INFO
-    volumes:
-      - genai_models:/app/models
-    # Resource limits for local ML models
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-        reservations:
-          memory: 512M
+      - WEBUI_API_KEY=${WEBUI_API_KEY} 
+      - PORT=5001
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8084/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"] # Healthcheck runs inside the container
       interval: 30s
       timeout: 30s
       retries: 3
-      start_period: 60s # Longer startup time for model loading
+      start_period: 30s
 
   client:
     build:
@@ -103,13 +96,62 @@ services:
     container_name: studyapp_client
     restart: always
     ports:
-      - "3000:80"
+      - "3000:80" # Expose Vue Client directly on host port 3000 
     depends_on:
       - auth-service
       - quiz-service
       - flashcard-service
       - genai-service
 
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/prometheus.rules.yml:/etc/prometheus/prometheus.rules.yml:ro # Mount alert rules
+      - prometheus_data:/prometheus # Persistent storage for Prometheus data
+    ports:
+      - "9090:9090" # Expose Prometheus UI on host port 9090
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on: # Ensure application services are up before Prometheus tries to scrape
+      - auth-service
+      - quiz-service
+      - flashcard-service
+      - genai-service
+
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: grafana
+    ports:
+      - "3001:3000" # Expose Grafana UI on host port 3001
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin 
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning # Mount your provisioning folders
+
+  # Alertmanager Service
+  alertmanager:
+    image: prom/alertmanager:v0.27.0 # Pin to a stable version
+    container_name: alertmanager
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro # Mount Alertmanager config
+      - alertmanager_data:/data # Persistent storage for Alertmanager data
+    ports:
+      - "9093:9093" # Expose Alertmanager UI on host port 9093
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/data'
+    depends_on:
+      - prometheus 
+
 volumes:
   pgdata:
-  genai_models:
+  grafana-storage:
+  prometheus_data: # Define the volume for Prometheus data
+  alertmanager_data: # Define the volume for Alertmanager data

@@ -1,0 +1,17 @@
+import axios from 'axios'
+
+const instance = axios.create({
+  baseURL: '/api/flashcard',
+})
+
+instance.interceptors.request.use(config => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+    console.log('Sending token:', token)
+  }
+  return config
+})
+
+export default instance 
+
