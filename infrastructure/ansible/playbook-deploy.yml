@@ -27,7 +27,7 @@
       git:
         repo: "{{ github_repo }}"
         dest: "{{ app_directory }}"
-        version: ansible-terraform
+        version: dev
         force: yes
       become_user: "{{ deployment_user }}"
       when: not git_repo_exists.stat.exists
@@ -36,7 +36,7 @@
       git:
         repo: "{{ github_repo }}"
         dest: "{{ app_directory }}"
-        version: ansible-terraform
+        version: dev
         force: yes
       become_user: "{{ deployment_user }}"
       when: git_repo_exists.stat.exists
@@ -75,11 +75,11 @@
       become_user: "{{ deployment_user }}"
       ignore_errors: yes
 
-    - name: Reset git repository to latest ansible-terraform
+    - name: Reset git repository to latest dev
       shell: |
         cd {{ app_directory }}
         git fetch origin
-        git reset --hard origin/ansible-terraform
+        git reset --hard origin/dev
         git clean -fd
       become_user: "{{ deployment_user }}"
 

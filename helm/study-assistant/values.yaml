@@ -1,5 +1,7 @@
 tumid: dev
 
+# LOCAL DEVELOPMENT VALUES - DO NOT USE IN PRODUCTION
+
 namespace:
   create: false
 

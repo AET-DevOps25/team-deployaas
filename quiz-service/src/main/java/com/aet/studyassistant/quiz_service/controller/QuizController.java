@@ -12,6 +12,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +31,7 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/quiz")
+@Tag(name = "Quiz Management", description = "API for managing courses, chapters, questions and quiz submissions")
 public class QuizController {
 
     private final ChapterService chapterService;
@@ -39,11 +49,15 @@ public class QuizController {
     }
 
     @GetMapping("/test")
+    @Operation(summary = "Test connection", description = "Test endpoint to verify the quiz service is running")
+    @ApiResponse(responseCode = "200", description = "Service is running successfully")
     public String testConnection() {
         return "Quiz Service is connected successfully!";
     }
 
     @GetMapping("/courses")
+    @Operation(summary = "Get all courses", description = "Retrieve all available courses")
+    @ApiResponse(responseCode = "200", description = "Courses retrieved successfully")
     public List<Course> getCourses() {
         return courseService.getAllCourses();
     }
@@ -108,27 +122,25 @@ public class QuizController {
     @PostMapping("/questions/{questionId}/submit")
     public ResponseEntity<?> submitAnswer(@PathVariable UUID questionId, @RequestBody Map<String, String> request) {
         try {
+            String userAnswer = request.get("answer");
+            if (userAnswer == null || userAnswer.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Answer cannot be empty");
+            }
+
             Optional<Question> questionOpt = questionService.getQuestionById(questionId);
             if (questionOpt.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
 
             Question question = questionOpt.get();
-            String userAnswer = request.get("answer");
-            String modelType = request.getOrDefault("model_type", "local");
-            
-            if (userAnswer == null || userAnswer.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Answer cannot be empty");
-            }
 
             // Call GenAI service for feedback
             Map<String, Object> feedbackResponse = genAIService.generateFeedback(
                 question.getText(),
                 userAnswer,
-                question.getSampleSolution(),
-                modelType
+                question.getSampleSolution()
             );
-            
+
             // Add additional context to response
             Map<String, Object> response = new HashMap<>(feedbackResponse);
             response.put("questionId", questionId);
@@ -136,9 +148,8 @@ public class QuizController {
             response.put("questionText", question.getText());
             response.put("chapterId", question.getChapter().getId());
             response.put("chapterTitle", question.getChapter().getName());
-            
+
             return ResponseEntity.ok(response);
-            
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error processing answer submission: " + e.getMessage());
         }

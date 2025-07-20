@@ -2,6 +2,8 @@ name: Build and Deploy to Kubernetes
 
 on:
   workflow_dispatch:
+  push:
+    branches: [dev, main]
 
 jobs:
   build:
@@ -108,11 +110,16 @@ jobs:
           # Update dependencies
           helm dependency update
           
-          # Deploy the application using values from values.yaml
-          helm upgrade --install study-assistant . 
-            --namespace=dev 
-            --timeout=10m 
-            --wait
+          # Deploy the application using values with Kubernetes secrets
+          helm upgrade --install study-assistant . \
+            --namespace=dev \
+            --timeout=10m \
+            --wait \
+            --values values-secure.yaml \
+            --set secrets.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
+            --set secrets.jwtSecret="${{ secrets.JWT_SECRET }}" \
+            --set secrets.genaiApiKey="${{ secrets.GENAI_API_KEY }}" \
+            --set secrets.grafanaPassword="${{ secrets.GRAFANA_PASSWORD }}"
 
       - name: Verify Deployment
         run: |

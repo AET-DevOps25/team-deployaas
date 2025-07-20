@@ -31,13 +31,12 @@ public class GenAIService {
     /**
      * Generate basic AI feedback for a student's answer
      */
-    public Map<String, Object> generateFeedback(String questionText, String userAnswer, String sampleSolution, String modelType) {
+    public Map<String, Object> generateFeedback(String questionText, String userAnswer, String sampleSolution) {
         try {
             Map<String, String> requestBody = new HashMap<>();
             requestBody.put("question_text", questionText);
             requestBody.put("user_answer", userAnswer);
             requestBody.put("sample_solution", sampleSolution);
-            requestBody.put("model_type", modelType);
             
             String response = webClient.post()
                     .uri(genaiServiceUrl + "/feedback")
