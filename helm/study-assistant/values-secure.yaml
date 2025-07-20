@@ -149,7 +149,7 @@ genaiService:
 prometheus:
   enabled: true
   image:
-    repository: prom/prometheus
+    repository: quay.io/prometheus/prometheus
     tag: v2.52.0
     pullPolicy: Always
   service:
@@ -191,7 +191,7 @@ grafana:
 alertmanager:
   enabled: true
   image:
-    repository: prom/alertmanager
+    repository: quay.io/prometheus/alertmanager
     tag: v0.27.0
     pullPolicy: Always
   service:

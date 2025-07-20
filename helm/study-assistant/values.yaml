@@ -51,6 +51,8 @@ quizService:
       value: https://team-deployaas.student.k8s.aet.cit.tum.de
     - name: JWT_SECRET
       value: "my-secret-key-for-jwt-tokens-which-should-be-longer-and-more-secure"
+    - name: SPRINGDOC_SWAGGER_UI_CONFIG_URL
+      value: "https://team-deployaas.student.k8s.aet.cit.tum.de/quiz-service/api-docs"
 
 flashcardService:
   image:
@@ -79,6 +81,8 @@ flashcardService:
       value: https://team-deployaas.student.k8s.aet.cit.tum.de
     - name: JWT_SECRET
       value: "my-secret-key-for-jwt-tokens-which-should-be-longer-and-more-secure"
+    - name: SPRINGDOC_SWAGGER_UI_CONFIG_URL
+      value: "https://team-deployaas.student.k8s.aet.cit.tum.de/flashcard-service/api-docs"
 
 authService:
   image:
@@ -107,6 +111,8 @@ authService:
       value: "my-secret-key-for-jwt-tokens-which-should-be-longer-and-more-secure"
     - name: FLASHCARD_SERVICE_URL
       value: http://study-assistant-flashcard-service:8082
+    - name: SPRINGDOC_SWAGGER_UI_CONFIG_URL
+      value: "https://team-deployaas.student.k8s.aet.cit.tum.de/auth-service/api-docs"
 
 genaiService:
   image:
@@ -128,7 +134,7 @@ genaiService:
 prometheus:
   enabled: true
   image:
-    repository: prom/prometheus
+    repository: quay.io/prometheus/prometheus
     tag: v2.52.0
     pullPolicy: Always
   service:
@@ -187,9 +193,9 @@ grafana:
 
 # Alertmanager configuration
 alertmanager:
-  enabled: false  # Disabled due to Docker Hub rate limiting
+  enabled: true  # Re-enabled with quay.io registry
   image:
-    repository: prom/alertmanager
+    repository: quay.io/prometheus/alertmanager
     tag: v0.27.0
     pullPolicy: Always
   service:
