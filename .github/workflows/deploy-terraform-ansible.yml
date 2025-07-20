@@ -41,16 +41,10 @@ jobs:
       - name: Setup SSH keys for Terraform
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/devops.pem
+          # Use your local devops key for both deployment and local access
+          echo "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" > ~/.ssh/devops.pem
           chmod 600 ~/.ssh/devops.pem
           ssh-keygen -y -f ~/.ssh/devops.pem > infrastructure/devops.pub
-          
-          # Setup local SSH key if provided
-          if [ -n "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" ]; then
-            echo "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" > ~/.ssh/local_devops.pem
-            chmod 600 ~/.ssh/local_devops.pem
-            ssh-keygen -y -f ~/.ssh/local_devops.pem > infrastructure/local_devops.pub
-          fi
 
       - name: Terraform Init
         working-directory: infrastructure
@@ -72,7 +66,7 @@ jobs:
           
           # Add local SSH key if provided
           if [ -n "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" ]; then
-            PLAN_CMD="$PLAN_CMD -var=\"local_ssh_key=local_devops.pub\""
+            PLAN_CMD="$PLAN_CMD -var=\"local_ssh_key=devops.pub\""
           fi
           
           # Add output file
@@ -111,9 +105,9 @@ jobs:
           # Build ansible command with optional local SSH key
           ANSIBLE_CMD="ansible-playbook -i inventory.ini playbook-simple.yml"
           
-          # Add local SSH public key if provided
+          # Add local SSH public key if provided (same key used for deployment)
           if [ -n "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" ]; then
-            LOCAL_PUB_KEY=$(ssh-keygen -y -f ~/.ssh/local_devops.pem)
+            LOCAL_PUB_KEY=$(ssh-keygen -y -f ~/.ssh/devops.pem)
             ANSIBLE_CMD="$ANSIBLE_CMD -e \"local_ssh_public_key=$LOCAL_PUB_KEY\""
           fi
           
