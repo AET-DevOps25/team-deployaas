@@ -22,11 +22,12 @@ public class SecurityConfig {
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 return http
                                 .csrf(csrf -> csrf.disable())
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/", "/api/auth/**",
-                                                                "/api/flashcard/setup-defaults/**", "/actuator/**")
-                                                .permitAll() // Added setup-defaults endpoint
-                                                .anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> auth
+                                .requestMatchers("/", "/api/auth/**",
+                                                "/api/flashcard/setup-defaults/**", "/actuator/**",
+                                                "/swagger-ui/**", "/swagger-ui.html", 
+                                                "/api-docs/**", "/v3/api-docs/**").permitAll()
+                                .anyRequest().authenticated())
                                 .sessionManagement(sess -> sess
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

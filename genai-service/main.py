@@ -16,8 +16,33 @@ API_URL = "https://gpu.aet.cit.tum.de/api/chat/completions"
 # Create FastAPI application instance
 app = FastAPI(
     title="GenAI Feedback Service",
-    description="Service that generates AI-powered feedback for quiz answers using Open WebUI",
-    version="1.0.0"
+    description="""
+    ## AI-Powered Learning Assistant
+    
+    This service provides intelligent feedback generation for educational content using state-of-the-art 
+    language models. It supports multiple feedback types and semantic analysis.
+    
+    ### Features
+    - **Basic Feedback**: Standard AI-generated feedback comparing answers
+    - **Advanced Feedback**: Detailed analysis with strengths, weaknesses, and suggestions
+    - **Semantic Analysis**: Similarity-based feedback using embeddings
+    - **Multiple Models**: Support for local LLM and OpenAI models
+    
+    ### Authentication
+    No authentication required for this service.
+    
+    ### Rate Limits
+    Please be mindful of API usage to ensure fair access for all users.
+    """,
+    version="1.0.0",
+    contact={
+        "name": "Study Assistant Team",
+        "email": "support@studyassistant.com",
+    },
+    license_info={
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT",
+    },
 )
 
 Instrumentator().instrument(app).expose(app)
@@ -26,17 +51,28 @@ Instrumentator().instrument(app).expose(app)
 class FeedbackRequest(BaseModel):
     """
     Request schema for feedback endpoint.
-
-    Attributes:
-        user_answer (str): The student's submitted answer
-        sample_solution (str): The correct/sample solution
-        question_text (str): The original question text for context
-        model_type (str): Type of model to use ('local' or 'openai')
     """
-    user_answer: str = Field(..., description="Student's submitted answer")
-    sample_solution: str = Field(..., description="Correct/sample solution")
-    question_text: str = Field(..., description="Original question text")
-    model_type: str = Field(default="local", description="Model type to use")
+    user_answer: str = Field(
+        ..., 
+        description="Student's submitted answer",
+        example="DevOps is a practice that combines development and operations teams to improve collaboration."
+    )
+    sample_solution: str = Field(
+        ..., 
+        description="Correct/sample solution for comparison",
+        example="DevOps is a set of practices that combines software development (Dev) and IT operations (Ops) to shorten the development lifecycle and provide continuous delivery with high software quality."
+    )
+    question_text: str = Field(
+        ..., 
+        description="Original question text for context",
+        example="What is DevOps and why is it important in modern software development?"
+    )
+    model_type: str = Field(
+        default="local", 
+        description="Model type to use for feedback generation",
+        example="local",
+        pattern="^(local|openai)$"
+    )
 
 
 class AdvancedFeedbackRequest(BaseModel):
@@ -70,23 +106,44 @@ class SemanticFeedbackRequest(BaseModel):
 class FeedbackResponse(BaseModel):
     """
     Response schema for feedback endpoints.
-
-    Attributes:
-        feedback (str): The main feedback text
-        strengths (List[str]): List of identified strengths
-        weaknesses (List[str]): List of identified weaknesses
-        suggestions (List[str]): List of improvement suggestions
-        score (float): Numerical score (0-100)
-        model_used (str): Model that generated the feedback
-        timestamp (str): When the feedback was generated
     """
-    feedback: str = Field(..., description="Main feedback text")
-    strengths: List[str] = Field(default_factory=list, description="Identified strengths")
-    weaknesses: List[str] = Field(default_factory=list, description="Identified weaknesses")
-    suggestions: List[str] = Field(default_factory=list, description="Improvement suggestions")
-    score: float = Field(..., description="Numerical score 0-100")
-    model_used: str = Field(..., description="Model used for generation")
-    timestamp: str = Field(..., description="Generation timestamp")
+    feedback: str = Field(
+        ..., 
+        description="Main feedback text providing detailed analysis",
+        example="Your answer demonstrates a good understanding of DevOps fundamentals. You correctly identified that DevOps combines development and operations teams..."
+    )
+    strengths: List[str] = Field(
+        default_factory=list, 
+        description="List of identified strengths in the answer",
+        example=["Clear understanding of DevOps concept", "Mentioned team collaboration"]
+    )
+    weaknesses: List[str] = Field(
+        default_factory=list, 
+        description="List of identified weaknesses or areas for improvement",
+        example=["Could mention continuous delivery", "Missing discussion of software quality benefits"]
+    )
+    suggestions: List[str] = Field(
+        default_factory=list, 
+        description="List of specific improvement suggestions",
+        example=["Consider discussing the continuous integration/continuous deployment (CI/CD) pipeline", "Mention how DevOps improves software quality and deployment frequency"]
+    )
+    score: float = Field(
+        ..., 
+        description="Numerical score from 0-100 based on answer quality",
+        example=78.5,
+        ge=0,
+        le=100
+    )
+    model_used: str = Field(
+        ..., 
+        description="Model that generated the feedback",
+        example="llama3.3:latest"
+    )
+    timestamp: str = Field(
+        ..., 
+        description="ISO timestamp when feedback was generated",
+        example="2024-01-15T10:30:00Z"
+    )
 
 
 def call_openwebui_api(prompt: str, model_name: str = "llama3.3:latest") -> str:
