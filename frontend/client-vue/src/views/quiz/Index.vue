@@ -265,7 +265,6 @@ import {
   ArrowRight as ArrowRightIcon,
   BookOpen as BookOpenIcon, // Added BookOpenIcon for navbar
 } from "lucide-vue-next";
-import { apiBaseUrl } from "../../config/api.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -340,7 +339,6 @@ const submitAnswer = async () => {
   if (!currentAnswer.value.trim()) return;
 
   submittingAnswer.value = true;
-  const quizApiUrl = getQuizApiUrl();
   
   try {
     const { data: feedback } = await api.post( // Changed fetch to api.post
@@ -363,7 +361,6 @@ const submitAdvancedAnswer = async () => {
   if (!currentAnswer.value.trim()) return;
 
   submittingAnswer.value = true;
-  const quizApiUrl = getQuizApiUrl();
   
   try {
     const { data: feedback } = await api.post( // Changed fetch to api.post
@@ -415,7 +412,6 @@ const formatTimestamp = (timestamp) => {
 // Fetch data on component mount
 onMounted(async () => {
   const chapterId = route.params.chapterId;
-  const quizApiUrl = getQuizApiUrl();
 
   try {
     // Fetch chapter details

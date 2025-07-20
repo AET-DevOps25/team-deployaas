@@ -1,14 +1,11 @@
 name: Build Docker Images
 
 on:
-  # Temporarily disabled - uncomment to re-enable automatic builds after tests
-  # workflow_run:
-  #   workflows: ["Run Tests"]
-  #   types:
-  #     - completed
+   workflow_run:
+     workflows: ["Run Tests"]
+     types:
+       - completed
   
-  # Manual trigger only for now
-  workflow_dispatch:
 
 jobs:
   build:

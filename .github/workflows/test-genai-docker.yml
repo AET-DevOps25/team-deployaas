@@ -1,19 +1,15 @@
 name: GenAI Service Tests (Docker)
 
 on:
-  # Temporarily disabled - uncomment to re-enable automatic tests
-  # push:
-  #   paths:
-  #     - "genai-service/**"
-  #   branches: ["**"]
-  # pull_request:
-  #   paths:
-  #     - "genai-service/**"
-  #   branches: ["**"]
+   push:
+     paths:
+       - "genai-service/**"
+     branches: ["**"]
+   pull_request:
+     paths:
+       - "genai-service/**"
+     branches: ["**"]
   
-  # Manual trigger only for now
-  workflow_dispatch:
-
 jobs:
   test-genai-docker:
     name: Test GenAI Service in Docker
