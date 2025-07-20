@@ -10,7 +10,6 @@
       <div class="hidden md:flex gap-6 pr-6">
         <RouterLink to="/home" class="btn btn-ghost">Home</RouterLink>
         <RouterLink to="/courses" class="btn btn-ghost">Courses</RouterLink>
-        <RouterLink to="/progress" class="btn btn-ghost">Progress</RouterLink>
       </div>
 
       <div class="flex-none">
@@ -95,28 +94,16 @@
       <!-- Quick Actions -->
       <section class="mb-16">
         <h2 class="text-2xl font-semibold mb-6">Quick Actions</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <RouterLink to="/progress" class="card bg-base-100 shadow hover:shadow-lg transition">
-            <div class="card-body text-center">
-              <TargetIcon class="mx-auto w-12 h-12 text-primary mb-2" />
-              <h3 class="text-lg font-semibold">View Progress</h3>
-              <p class="text-sm text-base-content/70">Track your learning journey</p>
-            </div>
-          </RouterLink>
-          <div class="card bg-base-100 shadow hover:shadow-lg transition opacity-60">
-            <div class="card-body text-center">
-              <SettingsIcon class="mx-auto w-12 h-12 text-primary mb-2" />
-              <h3 class="text-lg font-semibold">Placeholder Action</h3>
-              <p class="text-sm text-base-content/70">Placeholder to be used for future features</p>
-            </div>
+        <div class="flex justify-center">
+          <div class="w-full max-w-sm">
+            <RouterLink to="/flashcards" class="card bg-base-100 shadow hover:shadow-lg transition">
+              <div class="card-body text-center">
+                <BrainIcon class="mx-auto w-12 h-12 text-primary mb-2" />
+                <h3 class="text-lg font-semibold">Flashcards</h3>
+                <p class="text-sm text-base-content/70">Review with spaced repetition</p>
+              </div>
+            </RouterLink>
           </div>
-          <RouterLink to="/flashcards" class="card bg-base-100 shadow hover:shadow-lg transition">
-            <div class="card-body text-center">
-              <BrainIcon class="mx-auto w-12 h-12 text-primary mb-2" />
-              <h3 class="text-lg font-semibold">Flashcards</h3>
-              <p class="text-sm text-base-content/70">Review with spaced repetition</p>
-            </div>
-          </RouterLink>
         </div>
       </section>
     </div>
@@ -136,7 +123,6 @@ import { useRouter, RouterLink } from "vue-router";
 import {
   BookOpen as BookOpenIcon,
   Brain as BrainIcon,
-  Target as TargetIcon,
   Code as CodeIcon,
   Database as DatabaseIcon,
   Shield as ShieldIcon,
@@ -144,7 +130,6 @@ import {
   Smartphone as SmartphoneIcon,
   Globe as GlobeIcon,
   Cpu as CpuIcon,
-  Settings as SettingsIcon,
 } from "lucide-vue-next";
 import api from '../utils/api.js';
 
