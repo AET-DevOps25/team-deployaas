@@ -2,7 +2,7 @@ name: Deploy to AWS with Terraform + Ansible
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, ansible-terraform, main]
   workflow_dispatch:
 
 env:
