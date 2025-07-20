@@ -30,11 +30,12 @@ public class SecurityConfig {
                 return http
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .csrf(csrf -> csrf.disable())
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/", "/api/auth/**",
-                                                                "/api/flashcard/setup-defaults/**", "/api/flashcard/test", "/actuator/**")
-                                                .permitAll() // Added setup-defaults endpoint
-                                                .anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> auth
+                                .requestMatchers("/", "/api/auth/**",
+                                                "/api/flashcard/setup-defaults/**", "/api/flashcard/test", "/actuator/**",
+                                                "/swagger-ui/**", "/swagger-ui.html", 
+                                                "/api-docs/**", "/v3/api-docs/**").permitAll()
+                                .anyRequest().authenticated())
                                 .sessionManagement(sess -> sess
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

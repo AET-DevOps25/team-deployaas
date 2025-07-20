@@ -224,7 +224,7 @@ class QuizControllerTest {
         Map<String, Object> mockFeedback = createMockFeedbackResponse();
         
         when(questionService.getQuestionById(questionId)).thenReturn(Optional.of(mockQuestion));
-        when(genAIService.generateFeedback(anyString(), anyString(), anyString(), anyString()))
+        when(genAIService.generateFeedback(anyString(), anyString(), anyString()))
                 .thenReturn(mockFeedback);
 
         Map<String, String> requestBody = Map.of("answer", TEST_USER_ANSWER);
@@ -240,7 +240,7 @@ class QuizControllerTest {
                 .andExpect(jsonPath("$.userAnswer").value(TEST_USER_ANSWER));
 
         verify(questionService, times(1)).getQuestionById(questionId);
-        verify(genAIService, times(1)).generateFeedback(anyString(), anyString(), anyString(), anyString());
+        verify(genAIService, times(1)).generateFeedback(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -259,7 +259,7 @@ class QuizControllerTest {
                 .andExpect(content().string("Answer cannot be empty"));
 
         verify(questionService, never()).getQuestionById(any());
-        verify(genAIService, never()).generateFeedback(anyString(), anyString(), anyString(), anyString());
+        verify(genAIService, never()).generateFeedback(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -279,7 +279,7 @@ class QuizControllerTest {
                 .andExpect(status().isNotFound());
 
         verify(questionService, times(1)).getQuestionById(questionId);
-        verify(genAIService, never()).generateFeedback(anyString(), anyString(), anyString(), anyString());
+        verify(genAIService, never()).generateFeedback(anyString(), anyString(), anyString());
     }
 
     @Test

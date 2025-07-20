@@ -9,6 +9,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +26,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/flashcard")
+@Tag(name = "Flashcard Management", description = "API for managing flashcards and flashcard decks")
 public class FlashcardController {
 
     private final FlashcardService flashcardService;
@@ -39,12 +49,20 @@ public class FlashcardController {
     }
 
     @GetMapping("/test")
+    @Operation(summary = "Test connection", description = "Test endpoint to verify the flashcard service is running")
+    @ApiResponse(responseCode = "200", description = "Service is running successfully")
     public String testConnection() {
         return "Flashcard Service is connected successfully!";
     }
 
     @PostMapping("/setup-defaults/{userId}")
-    public ResponseEntity<String> setupDefaultDecks(@PathVariable UUID userId) {
+    @Operation(summary = "Setup default decks", description = "Create default flashcard decks for a new user")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Default decks created successfully"),
+        @ApiResponse(responseCode = "500", description = "Error creating default decks")
+    })
+    public ResponseEntity<String> setupDefaultDecks(
+            @Parameter(description = "User ID to create default decks for") @PathVariable UUID userId) {
         try {
             templateService.createDefaultDecksForNewUser(userId);
             return ResponseEntity.ok("Default flashcard decks created successfully for user: " + userId);
@@ -55,7 +73,16 @@ public class FlashcardController {
 
     // Deck endpoints
     @GetMapping("/decks/user/{userId}")
-    public ResponseEntity<List<FlashcardDeckDTO>> getUserDecks(@PathVariable UUID userId, HttpServletRequest request) {
+    @Operation(summary = "Get user decks", description = "Retrieve all flashcard decks for a specific user")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Decks retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden - cannot access other user's decks")
+    })
+    public ResponseEntity<List<FlashcardDeckDTO>> getUserDecks(
+            @Parameter(description = "User ID to get decks for") @PathVariable UUID userId, 
+            HttpServletRequest request) {
         // Extract user ID from JWT token for security
         UUID authenticatedUserId = extractUserIdFromRequest(request);
         if (authenticatedUserId == null) {

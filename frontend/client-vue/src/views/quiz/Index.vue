@@ -345,7 +345,6 @@ const submitAnswer = async () => {
       `/quiz/questions/${currentQuestion.value.id}/submit`,
       {
         answer: currentAnswer.value,
-        model_type: "local", // or 'openai' based on preference
       }
     );
     feedbacks.value[currentQuestionIndex.value] = feedback;
