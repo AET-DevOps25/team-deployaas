@@ -64,11 +64,6 @@ jobs:
             PLAN_CMD="$PLAN_CMD -var=\"local_ip=${{ secrets.LOCAL_IP }}\""
           fi
           
-          # Add local SSH key if provided
-          if [ -n "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" ]; then
-            PLAN_CMD="$PLAN_CMD -var=\"local_ssh_key=devops.pub\""
-          fi
-          
           # Add output file
           PLAN_CMD="$PLAN_CMD -out=tfplan"
           

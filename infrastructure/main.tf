@@ -197,13 +197,6 @@ resource "aws_key_pair" "ssh-key" {
   public_key = file(var.ssh_key)
 }
 
-# Local SSH key pair (if provided)
-resource "aws_key_pair" "local-ssh-key" {
-  count      = var.local_ssh_key != "" ? 1 : 0
-  key_name   = "local-devops-key"
-  public_key = file(var.local_ssh_key)
-}
-
 # ======== EC2 Instance ========
 resource "aws_instance" "myapp-server" {
   ami                         = data.aws_ami.amazon-linux-image.id
