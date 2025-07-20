@@ -133,14 +133,12 @@ public class QuizController {
             }
 
             Question question = questionOpt.get();
-            String modelType = request.getOrDefault("model_type", "local");
 
             // Call GenAI service for feedback
             Map<String, Object> feedbackResponse = genAIService.generateFeedback(
                 question.getText(),
                 userAnswer,
-                question.getSampleSolution(),
-                modelType
+                question.getSampleSolution()
             );
 
             // Add additional context to response

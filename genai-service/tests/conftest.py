@@ -39,8 +39,7 @@ def sample_feedback_request():
     return {
         "user_answer": "DevOps is a culture that combines development and operations teams.",
         "sample_solution": "DevOps is a set of practices that combines software development and IT operations to shorten the development lifecycle.",
-        "question_text": "What is DevOps?",
-        "model_type": "local"
+        "question_text": "What is DevOps?"
     }
 
 
@@ -141,8 +140,7 @@ def empty_request_data():
     return {
         "user_answer": "",
         "sample_solution": "",
-        "question_text": "",
-        "model_type": "local"
+        "question_text": ""
     }
 
 
@@ -152,6 +150,5 @@ def invalid_request_data():
     return {
         "user_answer": "   ",  # Only whitespace
         "sample_solution": "Valid solution",
-        "question_text": "Valid question",
-        "model_type": "local"
+        "question_text": "Valid question"
     }

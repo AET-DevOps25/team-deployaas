@@ -26,7 +26,7 @@ app = FastAPI(
     - **Basic Feedback**: Standard AI-generated feedback comparing answers
     - **Advanced Feedback**: Detailed analysis with strengths, weaknesses, and suggestions
     - **Semantic Analysis**: Similarity-based feedback using embeddings
-    - **Multiple Models**: Support for local LLM and OpenAI models
+    - **LLM Integration**: Powered by Open WebUI for reliable AI feedback
     
     ### Authentication
     No authentication required for this service.
@@ -55,23 +55,17 @@ class FeedbackRequest(BaseModel):
     user_answer: str = Field(
         ..., 
         description="Student's submitted answer",
-        example="DevOps is a practice that combines development and operations teams to improve collaboration."
+        json_schema_extra={"example": "DevOps is a practice that combines development and operations teams to improve collaboration."}
     )
     sample_solution: str = Field(
         ..., 
         description="Correct/sample solution for comparison",
-        example="DevOps is a set of practices that combines software development (Dev) and IT operations (Ops) to shorten the development lifecycle and provide continuous delivery with high software quality."
+        json_schema_extra={"example": "DevOps is a set of practices that combines software development (Dev) and IT operations (Ops) to shorten the development lifecycle and provide continuous delivery with high software quality."}
     )
     question_text: str = Field(
         ..., 
         description="Original question text for context",
-        example="What is DevOps and why is it important in modern software development?"
-    )
-    model_type: str = Field(
-        default="local", 
-        description="Model type to use for feedback generation",
-        example="local",
-        pattern="^(local|openai)$"
+        json_schema_extra={"example": "What is DevOps and why is it important in modern software development?"}
     )
 
 
@@ -110,39 +104,39 @@ class FeedbackResponse(BaseModel):
     feedback: str = Field(
         ..., 
         description="Main feedback text providing detailed analysis",
-        example="Your answer demonstrates a good understanding of DevOps fundamentals. You correctly identified that DevOps combines development and operations teams..."
+        json_schema_extra={"example": "Your answer demonstrates a good understanding of DevOps fundamentals. You correctly identified that DevOps combines development and operations teams..."}
     )
     strengths: List[str] = Field(
         default_factory=list, 
         description="List of identified strengths in the answer",
-        example=["Clear understanding of DevOps concept", "Mentioned team collaboration"]
+        json_schema_extra={"example": ["Clear understanding of DevOps concept", "Mentioned team collaboration"]}
     )
     weaknesses: List[str] = Field(
         default_factory=list, 
         description="List of identified weaknesses or areas for improvement",
-        example=["Could mention continuous delivery", "Missing discussion of software quality benefits"]
+        json_schema_extra={"example": ["Could mention continuous delivery", "Missing discussion of software quality benefits"]}
     )
     suggestions: List[str] = Field(
         default_factory=list, 
         description="List of specific improvement suggestions",
-        example=["Consider discussing the continuous integration/continuous deployment (CI/CD) pipeline", "Mention how DevOps improves software quality and deployment frequency"]
+        json_schema_extra={"example": ["Consider discussing the continuous integration/continuous deployment (CI/CD) pipeline", "Mention how DevOps improves software quality and deployment frequency"]}
     )
     score: float = Field(
         ..., 
         description="Numerical score from 0-100 based on answer quality",
-        example=78.5,
+        json_schema_extra={"example": 78.5},
         ge=0,
         le=100
     )
     model_used: str = Field(
         ..., 
         description="Model that generated the feedback",
-        example="llama3.3:latest"
+        json_schema_extra={"example": "llama3.3:latest"}
     )
     timestamp: str = Field(
         ..., 
         description="ISO timestamp when feedback was generated",
-        example="2024-01-15T10:30:00Z"
+        json_schema_extra={"example": "2024-01-15T10:30:00Z"}
     )
 
 

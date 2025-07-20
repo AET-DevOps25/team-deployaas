@@ -57,8 +57,7 @@ class TestBasicFeedbackEndpoint:
         request_data = {
             "user_answer": "",
             "sample_solution": "Valid solution",
-            "question_text": "Valid question",
-            "model_type": "local"
+            "question_text": "Valid question"
         }
         
         response = client.post("/feedback", json=request_data)
@@ -71,8 +70,7 @@ class TestBasicFeedbackEndpoint:
         request_data = {
             "user_answer": "   ",
             "sample_solution": "Valid solution",
-            "question_text": "Valid question",
-            "model_type": "local"
+            "question_text": "Valid question"
         }
         
         response = client.post("/feedback", json=request_data)
@@ -85,8 +83,7 @@ class TestBasicFeedbackEndpoint:
         request_data = {
             "user_answer": "Valid answer",
             "sample_solution": "",
-            "question_text": "Valid question",
-            "model_type": "local"
+            "question_text": "Valid question"
         }
         
         response = client.post("/feedback", json=request_data)
@@ -129,25 +126,21 @@ class TestBasicFeedbackEndpoint:
         assert response.status_code == 422
 
     @patch('main.call_openwebui_api')
-    def test_feedback_endpoint_different_model_types(self, mock_api_call, client):
-        """Test feedback endpoint with different model types."""
+    def test_feedback_endpoint_with_valid_request(self, mock_api_call, client):
+        """Test feedback endpoint with valid request data."""
         mock_api_call.return_value = "Test response"
         
-        test_cases = ["local", "openai", "custom"]
+        request_data = {
+            "user_answer": "Test answer",
+            "sample_solution": "Test solution",
+            "question_text": "Test question"
+        }
         
-        for model_type in test_cases:
-            request_data = {
-                "user_answer": "Test answer",
-                "sample_solution": "Test solution",
-                "question_text": "Test question",
-                "model_type": model_type
-            }
-            
-            response = client.post("/feedback", json=request_data)
-            
-            assert response.status_code == 200
-            data = response.json()
-            assert data["feedback"] == "Test response"
+        response = client.post("/feedback", json=request_data)
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["feedback"] == "Test response"
 
 
 class TestAdvancedFeedbackEndpoint:
