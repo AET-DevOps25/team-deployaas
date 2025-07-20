@@ -2,16 +2,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# ======== Variables ========
-variable "vpc_cidr_block" {}
-variable "subnet_1_cidr_block" {}
-variable "avail_zone" {}
-variable "env_prefix" {}
-variable "instance_type" {}
-variable "ssh_key" {}           # path to public key (.pub)
-variable "ssh_private_key" {}   # path to private key (.pem)
-variable "my_ip" {}
-
 # ======== Get latest Amazon Linux 2023 AMI ========
 data "aws_ami" "amazon-linux-image" {
   most_recent = true
@@ -82,11 +72,23 @@ resource "aws_security_group" "myapp-sg" {
   name   = "myapp-sg"
   vpc_id = aws_vpc.myapp-vpc.id
 
+  # SSH access from GitHub runner IP
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.my_ip]
+  }
+
+  # SSH access from local machine IP (if provided)
+  dynamic "ingress" {
+    for_each = var.local_ip != "" ? [1] : []
+    content {
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = [var.local_ip]
+    }
   }
 
   # Frontend (React app)
@@ -123,8 +125,8 @@ resource "aws_security_group" "myapp-sg" {
 
   # GenAI Service
   ingress {
-    from_port   = 8084
-    to_port     = 8084
+    from_port   = 5001
+    to_port     = 5001
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -133,6 +135,46 @@ resource "aws_security_group" "myapp-sg" {
   ingress {
     from_port   = 8080
     to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Prometheus
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Grafana
+  ingress {
+    from_port   = 3001
+    to_port     = 3001
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Alertmanager
+  ingress {
+    from_port   = 9093
+    to_port     = 9093
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # HTTPS for Traefik
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # HTTP for Traefik (redirect to HTTPS)
+  ingress {
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -151,8 +193,12 @@ resource "aws_security_group" "myapp-sg" {
 
 # ======== Key Pair ========
 resource "aws_key_pair" "ssh-key" {
-  key_name   = "devops-key"
+  key_name   = "devops-key-${random_id.key_suffix.hex}"
   public_key = file(var.ssh_key)
+}
+
+resource "random_id" "key_suffix" {
+  byte_length = 4
 }
 
 # ======== EC2 Instance ========
@@ -167,7 +213,7 @@ resource "aws_instance" "myapp-server" {
 
   root_block_device {
     volume_type = "gp3"
-    volume_size = 20
+    volume_size = 30
     encrypted   = true
   }
 

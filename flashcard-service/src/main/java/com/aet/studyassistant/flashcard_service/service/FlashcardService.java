@@ -19,15 +19,12 @@ public class FlashcardService {
     
     private final FlashcardDeckRepository deckRepository;
     private final FlashcardRepository flashcardRepository;
-    private final QuizServiceClient quizServiceClient;
 
     @Autowired
     public FlashcardService(FlashcardDeckRepository deckRepository, 
-                           FlashcardRepository flashcardRepository,
-                           QuizServiceClient quizServiceClient) {
+                           FlashcardRepository flashcardRepository) {
         this.deckRepository = deckRepository;
         this.flashcardRepository = flashcardRepository;
-        this.quizServiceClient = quizServiceClient;
     }
 
     // Deck operations
@@ -110,37 +107,6 @@ public class FlashcardService {
             return true;
         }
         return false;
-    }
-
-    // Generate flashcards from quiz questions
-    public Optional<FlashcardDeckDTO> generateFlashcardsFromChapter(UUID userId, UUID chapterId, String deckName) {
-        try {
-            // Get chapter and questions from quiz service
-            var chapterData = quizServiceClient.getChapterQuestions(chapterId);
-            if (chapterData == null || chapterData.isEmpty()) {
-                return Optional.empty();
-            }
-
-            // Create new deck
-            FlashcardDeck deck = new FlashcardDeck(userId, deckName);
-            FlashcardDeck savedDeck = deckRepository.save(deck);
-
-            // Create flashcards from questions
-            List<Flashcard> flashcards = chapterData.stream()
-                    .map(question -> new Flashcard(
-                            question.get("text").toString(),
-                            question.get("sampleSolution").toString(),
-                            savedDeck
-                    ))
-                    .collect(Collectors.toList());
-
-            flashcardRepository.saveAll(flashcards);
-            savedDeck.setFlashcards(flashcards);
-
-            return Optional.of(convertDeckToDTOWithFlashcards(savedDeck));
-        } catch (Exception e) {
-            return Optional.empty();
-        }
     }
 
     // Helper methods

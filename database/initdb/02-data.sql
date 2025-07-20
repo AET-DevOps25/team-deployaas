@@ -2,8 +2,8 @@
 -- Insert initial course data
 INSERT INTO courses (course_id, title) VALUES 
     ('550e8400-e29b-41d4-a716-446655440000', 'DevOps Fundamentals'),
-    ('550e8400-e29b-41d4-a716-446655441000', 'Placeholder Course 1'),
-    ('550e8400-e29b-41d4-a716-446655442000', 'Placeholder Course 2');
+    ('550e8400-e29b-41d4-a716-446655441000', 'Software Testing Fundamentals'),
+    ('550e8400-e29b-41d4-a716-446655442000', 'Network Security Essentials');
 
 -- Insert DevOps chapters
 INSERT INTO chapters (chapter_id, name, course_id) VALUES 
@@ -11,37 +11,53 @@ INSERT INTO chapters (chapter_id, name, course_id) VALUES
     ('550e8400-e29b-41d4-a716-446655440002', 'Infrastructure as Code', '550e8400-e29b-41d4-a716-446655440000'),
     ('550e8400-e29b-41d4-a716-446655440003', 'Monitoring and Observability', '550e8400-e29b-41d4-a716-446655440000');
 
--- Insert Placeholder Course 1 chapters
+-- Insert Software Testing Fundamentals chapters
 INSERT INTO chapters (chapter_id, name, course_id) VALUES 
-    ('550e8400-e29b-41d4-a716-446655441001', 'Placeholder Chapter 1A', '550e8400-e29b-41d4-a716-446655441000'),
-    ('550e8400-e29b-41d4-a716-446655441002', 'Placeholder Chapter 1B', '550e8400-e29b-41d4-a716-446655441000');
+    ('550e8400-e29b-41d4-a716-446655441001', 'Testing Principles & Fundamentals', '550e8400-e29b-41d4-a716-446655441000'),
+    ('550e8400-e29b-41d4-a716-446655441002', 'Test Types & Methodologies', '550e8400-e29b-41d4-a716-446655441000');
 
--- Insert Placeholder Course 2 chapters
+-- Insert Network Security Essentials chapters
 INSERT INTO chapters (chapter_id, name, course_id) VALUES 
-    ('550e8400-e29b-41d4-a716-446655442001', 'Placeholder Chapter 2A', '550e8400-e29b-41d4-a716-446655442000'),
-    ('550e8400-e29b-41d4-a716-446655442002', 'Placeholder Chapter 2B', '550e8400-e29b-41d4-a716-446655442000');
+    ('550e8400-e29b-41d4-a716-446655442001', 'Network Threats & Vulnerabilities', '550e8400-e29b-41d4-a716-446655442000'),
+    ('550e8400-e29b-41d4-a716-446655442002', 'Security Protocols & Implementation', '550e8400-e29b-41d4-a716-446655442000');
 
--- Insert sample questions for Placeholder Course 1
+-- Insert sample questions for Software Testing Fundamentals
 INSERT INTO questions (question_id, text, sample_solution, chapter_id, ordering) VALUES 
     ('550e8400-e29b-41d4-a716-446655441011', 
-     'What are the fundamental principles of software testing?',
-     'The fundamental principles of software testing include: 1) Testing shows the presence of defects, not their absence, 2) Exhaustive testing is impossible, 3) Early testing saves time and money, 4) Defects cluster together, 5) Testing is context-dependent, 6) The pesticide paradox - tests need to be updated regularly, and 7) Absence-of-errors fallacy - finding defects does not guarantee system usability.',
+     'What are the seven fundamental principles of software testing?',
+     'The seven principles are: 1) Testing shows the presence of defects, not their absence, 2) Exhaustive testing is impossible, 3) Early testing saves time and money, 4) Defects cluster together, 5) Testing is context-dependent, 6) Pesticide paradox - tests need regular updates, 7) Absence-of-errors fallacy - finding defects doesn''t guarantee usability.',
      '550e8400-e29b-41d4-a716-446655441001', 1),
     ('550e8400-e29b-41d4-a716-446655441012',
-     'Explain the difference between verification and validation in testing.',
-     'Verification is the process of checking whether the product is being built correctly according to specifications (Are we building the product right?). Validation is the process of checking whether the correct product is being built according to user requirements (Are we building the right product?). Verification typically involves static testing methods like reviews and inspections, while validation involves dynamic testing by executing the code.',
-     '550e8400-e29b-41d4-a716-446655441002', 1);
+     'Explain the difference between verification and validation in software testing.',
+     'Verification asks "Are we building the product right?" - checking if software meets specifications through static methods like reviews. Validation asks "Are we building the right product?" - ensuring software meets user needs through dynamic testing by executing code.',
+     '550e8400-e29b-41d4-a716-446655441001', 2),
+    ('550e8400-e29b-41d4-a716-446655441013',
+     'What is the difference between black-box and white-box testing?',
+     'Black-box testing examines functionality without knowledge of internal code structure, focusing on inputs and outputs. White-box testing involves testing with full knowledge of internal code structure, paths, and logic to ensure all code paths are tested.',
+     '550e8400-e29b-41d4-a716-446655441002', 1),
+    ('550e8400-e29b-41d4-a716-446655441014',
+     'Describe the key differences between unit testing, integration testing, and system testing.',
+     'Unit testing tests individual components in isolation. Integration testing verifies interfaces between integrated components. System testing validates the complete integrated system against requirements. Each level increases in scope and complexity.',
+     '550e8400-e29b-41d4-a716-446655441002', 2);
 
--- Insert sample questions for Placeholder Course 2  
+-- Insert sample questions for Network Security Essentials  
 INSERT INTO questions (question_id, text, sample_solution, chapter_id, ordering) VALUES 
     ('550e8400-e29b-41d4-a716-446655442011', 
-     'Describe advanced testing strategies for complex systems.',
-     'Advanced testing strategies for complex systems include: 1) Risk-based testing to prioritize test efforts, 2) Model-based testing using formal models, 3) Property-based testing with automated test case generation, 4) Mutation testing to evaluate test suite quality, 5) Exploratory testing for discovering unexpected behaviors, 6) Performance testing under realistic loads, and 7) Security testing to identify vulnerabilities.',
+     'What are the main types of network security threats?',
+     'Main network threats include: 1) Malware (viruses, worms, trojans), 2) DDoS attacks, 3) Man-in-the-middle attacks, 4) Phishing and social engineering, 5) SQL injection, 6) Cross-site scripting (XSS), 7) Ransomware, 8) Advanced Persistent Threats (APTs).',
      '550e8400-e29b-41d4-a716-446655442001', 1),
     ('550e8400-e29b-41d4-a716-446655442012',
-     'How do you implement continuous testing in modern development workflows?',
-     'Continuous testing in modern development workflows involves: 1) Integrating automated tests into CI/CD pipelines, 2) Implementing multiple test layers (unit, integration, system, acceptance), 3) Using test automation frameworks and tools, 4) Parallel test execution for faster feedback, 5) Test data management and environment provisioning, 6) Real-time monitoring and reporting, 7) Shift-left testing practices, and 8) Continuous feedback loops for test improvement.',
-     '550e8400-e29b-41d4-a716-446655442002', 1);
+     'Explain how a firewall works and describe different types of firewalls.',
+     'Firewalls monitor and control network traffic based on security rules. Types include: 1) Packet-filtering firewalls (examine packet headers), 2) Stateful inspection firewalls (track connection states), 3) Application layer firewalls (deep packet inspection), 4) Next-generation firewalls (combine multiple technologies).',
+     '550e8400-e29b-41d4-a716-446655442001', 2),
+    ('550e8400-e29b-41d4-a716-446655442013',
+     'What is the purpose of network encryption and how does TLS/SSL work?',
+     'Network encryption protects data confidentiality during transmission. TLS/SSL works through: 1) Handshake protocol establishing secure connection, 2) Certificate exchange for authentication, 3) Key exchange using asymmetric encryption, 4) Symmetric encryption for data transfer using shared keys.',
+     '550e8400-e29b-41d4-a716-446655442002', 1),
+    ('550e8400-e29b-41d4-a716-446655442014',
+     'Describe the components and benefits of a Virtual Private Network (VPN).',
+     'VPN components include: VPN client, VPN server, tunneling protocols (IPSec, OpenVPN), and encryption algorithms. Benefits: secure remote access, data encryption, IP address masking, bypassing geo-restrictions, protection on public networks.',
+     '550e8400-e29b-41d4-a716-446655442002', 2);
 
 -- Insert questions for Chapter 1: CI/CD Pipelines
 INSERT INTO questions (question_id, text, sample_solution, chapter_id, ordering) VALUES 
@@ -91,8 +107,8 @@ INSERT INTO questions (question_id, text, sample_solution, chapter_id, ordering)
 -- Insert test flashcard decks
 INSERT INTO flashcard_decks (deck_id, user_id, name) VALUES 
     ('550e8400-e29b-41d4-a716-446655450001', '00000000-0000-0000-0000-000000000001', 'DevOps Fundamentals Deck'),
-    ('550e8400-e29b-41d4-a716-446655450002', '00000000-0000-0000-0000-000000000001', 'Testing Strategies Deck'),
-    ('550e8400-e29b-41d4-a716-446655450003', '00000000-0000-0000-0000-000000000001', 'CI/CD Pipeline Essentials');
+    ('550e8400-e29b-41d4-a716-446655450002', '00000000-0000-0000-0000-000000000001', 'Software Testing Fundamentals Deck'),
+    ('550e8400-e29b-41d4-a716-446655450003', '00000000-0000-0000-0000-000000000001', 'Network Security Essentials Deck');
 
 -- Insert test flashcards for DevOps Fundamentals Deck
 INSERT INTO flashcards (flashcard_id, deck_id, front, back) VALUES 
@@ -112,34 +128,42 @@ INSERT INTO flashcards (flashcard_id, deck_id, front, back) VALUES
      'What is the difference between monitoring and observability?', 
      'Monitoring tells you WHAT is happening (predefined metrics), while observability helps you understand WHY it is happening (ability to debug unknown issues)');
 
--- Insert test flashcards for Testing Strategies Deck
+-- Insert test flashcards for Software Testing Fundamentals Deck
 INSERT INTO flashcards (flashcard_id, deck_id, front, back) VALUES 
     ('550e8400-e29b-41d4-a716-446655450021', '550e8400-e29b-41d4-a716-446655450002', 
      'What is the difference between verification and validation?', 
      'Verification: Are we building the product right? (according to specifications)\nValidation: Are we building the right product? (according to user requirements)'),
     
     ('550e8400-e29b-41d4-a716-446655450022', '550e8400-e29b-41d4-a716-446655450002', 
-     'Name 3 fundamental principles of software testing', 
-     '1. Testing shows presence of defects, not their absence\n2. Exhaustive testing is impossible\n3. Early testing saves time and money'),
+     'Name the 7 fundamental principles of software testing', 
+     '1. Testing shows presence of defects, not absence\n2. Exhaustive testing is impossible\n3. Early testing saves time and money\n4. Defects cluster together\n5. Testing is context-dependent\n6. Pesticide paradox\n7. Absence-of-errors fallacy'),
     
     ('550e8400-e29b-41d4-a716-446655450023', '550e8400-e29b-41d4-a716-446655450002', 
-     'What is mutation testing?', 
-     'A testing technique that evaluates test suite quality by introducing small changes (mutations) to the code and checking if tests can detect these changes');
+     'What is the difference between black-box and white-box testing?', 
+     'Black-box: Testing without knowing internal code structure, focusing on inputs/outputs\nWhite-box: Testing with full knowledge of internal code structure and logic'),
+    
+    ('550e8400-e29b-41d4-a716-446655450024', '550e8400-e29b-41d4-a716-446655450002', 
+     'What are the main differences between unit, integration, and system testing?', 
+     'Unit: Tests individual components in isolation\nIntegration: Tests interfaces between integrated components\nSystem: Tests complete integrated system against requirements');
 
--- Insert test flashcards for CI/CD Pipeline Essentials Deck
+-- Insert test flashcards for Network Security Essentials Deck
 INSERT INTO flashcards (flashcard_id, deck_id, front, back) VALUES 
     ('550e8400-e29b-41d4-a716-446655450031', '550e8400-e29b-41d4-a716-446655450003', 
-     'What are the key stages of a CI/CD pipeline?', 
-     '1. Source Control\n2. Build Stage\n3. Test Stage\n4. Code Analysis\n5. Deployment to Staging\n6. Production Deployment\n7. Monitoring'),
+     'What are the main types of network security threats?', 
+     'Malware, DDoS attacks, Man-in-the-middle attacks, Phishing, SQL injection, XSS, Ransomware, APTs'),
     
     ('550e8400-e29b-41d4-a716-446655450032', '550e8400-e29b-41d4-a716-446655450003', 
-     'What is the main benefit of automated testing in CI/CD?', 
-     'Early detection of integration issues and improved code quality through consistent, repeatable testing'),
+     'What are the different types of firewalls?', 
+     '1. Packet-filtering (examine headers)\n2. Stateful inspection (track connections)\n3. Application layer (deep packet inspection)\n4. Next-generation (multiple technologies)'),
     
     ('550e8400-e29b-41d4-a716-446655450033', '550e8400-e29b-41d4-a716-446655450003', 
-     'What is infrastructure drift?', 
-     'When actual infrastructure configuration deviates from the defined specification over time due to manual changes, patches, or updates'),
+     'How does TLS/SSL work?', 
+     '1. Handshake protocol\n2. Certificate exchange for authentication\n3. Key exchange using asymmetric encryption\n4. Symmetric encryption for data transfer'),
     
     ('550e8400-e29b-41d4-a716-446655450034', '550e8400-e29b-41d4-a716-446655450003', 
-     'How does IaC prevent infrastructure drift?', 
-     'By maintaining a single source of truth in code, regularly comparing actual vs desired state, and enabling automated remediation');
+     'What are the main components of a VPN?', 
+     'VPN client, VPN server, tunneling protocols (IPSec, OpenVPN), encryption algorithms'),
+    
+    ('550e8400-e29b-41d4-a716-446655450035', '550e8400-e29b-41d4-a716-446655450003', 
+     'What are the benefits of using a VPN?', 
+     'Secure remote access, data encryption, IP masking, bypassing geo-restrictions, protection on public networks');

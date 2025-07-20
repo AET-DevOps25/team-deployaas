@@ -7,7 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 import re
 import logging
-from typing import Tuple, List, Dict, Any
+from typing import Tuple, List, Dict, Any, Optional
 import os
 
 logger = logging.getLogger(__name__)
@@ -66,6 +66,9 @@ class SemanticAnalyzer:
         
         # Remove common punctuation that doesn't affect meaning
         text = re.sub(r'[^\w\s\-\']', ' ', text)
+        
+        # Clean up any double spaces created by punctuation removal
+        text = re.sub(r'\s+', ' ', text.strip())
         
         return text    
         
@@ -208,9 +211,13 @@ class SemanticAnalyzer:
 # Global instance to reuse the model
 _semantic_analyzer = None
 
-def get_semantic_analyzer() -> SemanticAnalyzer:
+def get_semantic_analyzer() -> Optional[SemanticAnalyzer]:
     """Get or create semantic analyzer instance"""
     global _semantic_analyzer
     if _semantic_analyzer is None:
-        _semantic_analyzer = SemanticAnalyzer()
+        try:
+            _semantic_analyzer = SemanticAnalyzer()
+        except Exception as e:
+            print(f"Failed to initialize semantic analyzer: {e}")
+            return None
     return _semantic_analyzer

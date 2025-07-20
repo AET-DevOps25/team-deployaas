@@ -1,0 +1,267 @@
+# Production values with secret placeholders
+tumid: dev
+
+namespace:
+  create: false
+
+client:
+  image:
+    repository: ghcr.io/aet-devops25/team-deployaas/client
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 80
+    nodePort: 30080
+  replicaCount: 1
+
+quizService:
+  image:
+    repository: ghcr.io/aet-devops25/team-deployaas/quiz-service
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 8081
+    targetPort: 8081
+  replicaCount: 1
+  env:
+    - name: SPRING_DATASOURCE_URL
+      value: jdbc:postgresql://study-assistant-postgresql:5432/initexample
+    - name: SPRING_DATASOURCE_USERNAME
+      value: postgres
+    - name: SPRING_DATASOURCE_PASSWORD
+      value: "POSTGRES_PASSWORD_PLACEHOLDER"
+    - name: GENAI_SERVICE_URL
+      value: http://study-assistant-genai-service:5001
+    - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+      value: update
+    - name: SPRING_JPA_SHOW_SQL
+      value: "false"
+    - name: FRONTEND_ORIGIN
+      value: https://team-deployaas.student.k8s.aet.cit.tum.de
+    - name: JWT_SECRET
+      value: "JWT_SECRET_PLACEHOLDER"
+
+flashcardService:
+  image:
+    repository: ghcr.io/aet-devops25/team-deployaas/flashcard-service
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 8082
+    targetPort: 8082
+  replicaCount: 1
+  env:
+    - name: SPRING_DATASOURCE_URL
+      value: jdbc:postgresql://study-assistant-postgresql:5432/initexample
+    - name: SPRING_DATASOURCE_USERNAME
+      value: postgres
+    - name: SPRING_DATASOURCE_PASSWORD
+      value: "POSTGRES_PASSWORD_PLACEHOLDER"
+    - name: QUIZ_SERVICE_URL
+      value: http://study-assistant-quiz-service:8081
+    - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+      value: update
+    - name: SPRING_JPA_SHOW_SQL
+      value: "false"
+    - name: FRONTEND_ORIGIN
+      value: https://team-deployaas.student.k8s.aet.cit.tum.de
+    - name: JWT_SECRET
+      value: "JWT_SECRET_PLACEHOLDER"
+
+authService:
+  image:
+    repository: ghcr.io/aet-devops25/team-deployaas/auth-service
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 8083
+    targetPort: 8083
+  replicaCount: 1
+  env:
+    - name: SPRING_DATASOURCE_URL
+      value: jdbc:postgresql://study-assistant-postgresql:5432/initexample
+    - name: SPRING_DATASOURCE_USERNAME
+      value: postgres
+    - name: SPRING_DATASOURCE_PASSWORD
+      value: "POSTGRES_PASSWORD_PLACEHOLDER"
+    - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+      value: update
+    - name: SPRING_JPA_SHOW_SQL
+      value: "false"
+    - name: FRONTEND_ORIGIN
+      value: https://team-deployaas.student.k8s.aet.cit.tum.de
+    - name: JWT_SECRET
+      value: "JWT_SECRET_PLACEHOLDER"
+    - name: FLASHCARD_SERVICE_URL
+      value: http://study-assistant-flashcard-service:8082
+
+genaiService:
+  image:
+    repository: ghcr.io/aet-devops25/team-deployaas/genai-service
+    tag: latest
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 5001
+    targetPort: 5001
+  replicaCount: 1
+  env:
+    - name: PORT
+      value: "5001"
+    - name: WEBUI_API_KEY
+      value: "GENAI_API_KEY_PLACEHOLDER"
+
+# Prometheus configuration
+prometheus:
+  enabled: true
+  image:
+    repository: prom/prometheus
+    tag: v2.52.0
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 9090
+    targetPort: 9090
+  replicaCount: 1
+  persistence:
+    enabled: true
+    size: 8Gi
+  config:
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      - job_name: 'auth-service'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['study-assistant-auth-service:8083']
+      - job_name: 'quiz-service'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['study-assistant-quiz-service:8081']
+      - job_name: 'flashcard-service'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['study-assistant-flashcard-service:8082']
+      - job_name: 'genai-service'
+        metrics_path: '/metrics'
+        static_configs:
+          - targets: ['study-assistant-genai-service:5001']
+
+# Grafana configuration
+grafana:
+  enabled: true
+  image:
+    repository: grafana/grafana
+    tag: 10.2.2
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  replicaCount: 1
+  persistence:
+    enabled: true
+    size: 2Gi
+  env:
+    - name: GF_SECURITY_ADMIN_USER
+      value: "admin"
+    - name: GF_SECURITY_ADMIN_PASSWORD
+      value: "GRAFANA_PASSWORD_PLACEHOLDER"
+    - name: GF_SERVER_ROOT_URL
+      value: "https://team-deployaas.student.k8s.aet.cit.tum.de/grafana"
+    - name: GF_SERVER_SERVE_FROM_SUB_PATH
+      value: "true"
+
+# Alertmanager configuration
+alertmanager:
+  enabled: true
+  image:
+    repository: prom/alertmanager
+    tag: v0.27.0
+    pullPolicy: Always
+  service:
+    type: ClusterIP
+    port: 9093
+    targetPort: 9093
+  replicaCount: 1
+  persistence:
+    enabled: true
+    size: 1Gi
+  config:
+    global: {}
+    route:
+      receiver: 'default-receiver'
+      group_by: ['alertname', 'job', 'instance']
+      group_interval: 5m
+      repeat_interval: 4h
+    receivers:
+      - name: 'default-receiver'
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://team-deployaas.student.k8s.aet.cit.tum.de"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+  host: team-deployaas.student.k8s.aet.cit.tum.de
+  tls: true
+  tlsSecret: deployaas-tls
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    enablePostgresUser: true
+    postgresPassword: "POSTGRES_PASSWORD_PLACEHOLDER"
+    database: "initexample"
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+    initdb:
+      scripts:
+        01-schema.sql: |
+          -- Users table
+          CREATE TABLE IF NOT EXISTS users (
+              user_id UUID PRIMARY KEY,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+
+          -- Courses table
+          CREATE TABLE IF NOT EXISTS courses (
+              course_id UUID PRIMARY KEY,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+
+          -- Chapters table
+          CREATE TABLE IF NOT EXISTS chapters (
+              chapter_id UUID PRIMARY KEY,
+              FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE
+          );
+
+          -- Questions table
+          CREATE TABLE IF NOT EXISTS questions (
+              question_id UUID PRIMARY KEY,
+              FOREIGN KEY (chapter_id) REFERENCES chapters(chapter_id) ON DELETE CASCADE
+          );
+
+          -- Flashcard decks table
+          CREATE TABLE IF NOT EXISTS flashcard_decks (
+              deck_id UUID PRIMARY KEY,
+              FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+          );
+
+          -- Flashcards table
+          CREATE TABLE IF NOT EXISTS flashcards (
+              flashcard_id UUID PRIMARY KEY,
+              FOREIGN KEY (deck_id) REFERENCES flashcard_decks(deck_id) ON DELETE CASCADE
+          );

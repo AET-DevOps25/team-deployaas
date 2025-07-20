@@ -1,0 +1,116 @@
+name: Run Tests
+
+on:
+   push:
+     branches: ["**"]
+   pull_request:
+     branches: ["**"]
+  
+
+jobs:
+  test-java-services:
+    name: Run Java Service Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [auth-service, quiz-service, flashcard-service]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: "24"
+          distribution: "temurin"
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Make gradlew executable
+        run: |
+          cd ${{ matrix.service }}
+          chmod +x ./gradlew
+
+      - name: Run tests for ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          ./gradlew test
+
+  test-python-services:
+    name: Run Python Service Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [genai-service]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/test_requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies for ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r test_requirements.txt
+
+      - name: Run tests for ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          export PYTHONPATH=$(pwd)
+          export WEBUI_API_KEY="test_key_for_ci"
+          pytest tests/ -v
+
+  test-frontend:
+    name: Run Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/client-vue/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd frontend/client-vue
+          npm ci
+
+      - name: Run frontend tests
+        run: |
+          cd frontend/client-vue
+          npm run test:run
+
+      - name: Build frontend
+        run: |
+          cd frontend/client-vue
+          npm run build

@@ -27,7 +27,7 @@
       git:
         repo: "{{ github_repo }}"
         dest: "{{ app_directory }}"
-        version: ansible-terraform
+        version: dev
         force: yes
       become_user: "{{ deployment_user }}"
       when: not git_repo_exists.stat.exists
@@ -36,7 +36,7 @@
       git:
         repo: "{{ github_repo }}"
         dest: "{{ app_directory }}"
-        version: ansible-terraform
+        version: dev
         force: yes
       become_user: "{{ deployment_user }}"
       when: git_repo_exists.stat.exists
@@ -48,8 +48,9 @@
           POSTGRES_USER=initexample
           POSTGRES_PASSWORD=initexample
           POSTGRES_DB=initexample
-          OPENAI_API_KEY=
           FRONTEND_ORIGIN=http://{{ ansible_host }}:3000
+          JWT_SECRET=I2GHcCfU2UFQJ/S1yiPYCyT5J5lGdg3vdxNwuCHXyGkRN0g6KEiTGZ0PGBgAhO1e79Xzo2fflk7P1b5mNyJUyg==
+          WEBUI_API_KEY=sk-de1b5dfd9ef14dc798d1d121a2128512
         owner: "{{ deployment_user }}"
         group: "{{ deployment_user }}"
         mode: '0600'
@@ -74,11 +75,11 @@
       become_user: "{{ deployment_user }}"
       ignore_errors: yes
 
-    - name: Reset git repository to latest ansible-terraform
+    - name: Reset git repository to latest dev
       shell: |
         cd {{ app_directory }}
         git fetch origin
-        git reset --hard origin/ansible-terraform
+        git reset --hard origin/dev
         git clean -fd
       become_user: "{{ deployment_user }}"
 
@@ -98,6 +99,8 @@
         sudo docker-compose up -d
       become_user: "{{ deployment_user }}"
       register: docker_compose_result
+      async: 1800  # 30 minutes timeout
+      poll: 30     # Check every 30 seconds
 
     - name: Check quiz service logs for CORS configuration
       shell: |
@@ -122,9 +125,12 @@
         - 8081  # Quiz service
         - 8082  # Flashcard service
         - 8083  # Auth service
-        - 8084  # GenAI service
+        - 5001  # GenAI service
         - 5432  # PostgreSQL
         - 8080  # PgAdmin
+        - 9090  # Prometheus
+        - 3001  # Grafana
+        - 9093  # Alertmanager
 
     - name: Check running containers
       shell: sudo docker ps
@@ -143,5 +149,8 @@
           - Quiz Service: http://{{ ansible_host }}:8081
           - Flashcard Service: http://{{ ansible_host }}:8082
           - Auth Service: http://{{ ansible_host }}:8083
-          - GenAI Service: http://{{ ansible_host }}:8084
+          - GenAI Service: http://{{ ansible_host }}:5001
           - PgAdmin: http://{{ ansible_host }}:8080
+          - Prometheus: http://{{ ansible_host }}:9090
+          - Grafana: http://{{ ansible_host }}:3001
+          - Alertmanager: http://{{ ansible_host }}:9093

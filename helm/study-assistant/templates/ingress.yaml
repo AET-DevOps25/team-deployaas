@@ -1,0 +1,297 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "study-assistant.fullname" . }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-client
+                port:
+                  number: {{ .Values.client.service.port }}
+          - path: /api/quiz
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-quiz-service
+                port:
+                  number: {{ .Values.quizService.service.port }}
+          - path: /api/flashcard
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-flashcard-service
+                port:
+                  number: {{ .Values.flashcardService.service.port }}
+          - path: /api/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-auth-service
+                port:
+                  number: {{ .Values.authService.service.port }}
+          - path: /api/genai
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-genai-service
+                port:
+                  number: {{ .Values.genaiService.service.port }}
+          
+          # Main Swagger UI endpoint - defaults to auth service  
+          - path: /swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-auth-service
+                port:
+                  number: {{ .Values.authService.service.port }}
+          
+          # Direct API paths for Swagger UI (keeping existing functionality)
+          - path: /api/auth/swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-auth-service
+                port:
+                  number: {{ .Values.authService.service.port }}
+          - path: /api/auth/v3/api-docs
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-auth-service
+                port:
+                  number: {{ .Values.authService.service.port }}
+          - path: /api/flashcard/swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-flashcard-service
+                port:
+                  number: {{ .Values.flashcardService.service.port }}
+          - path: /api/flashcard/v3/api-docs
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-flashcard-service
+                port:
+                  number: {{ .Values.flashcardService.service.port }}
+          - path: /api/quiz/swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-quiz-service
+                port:
+                  number: {{ .Values.quizService.service.port }}
+          - path: /api/quiz/v3/api-docs
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-quiz-service
+                port:
+                  number: {{ .Values.quizService.service.port }}
+          {{- if .Values.prometheus.enabled }}
+          - path: /prometheus
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-prometheus
+                port:
+                  number: {{ .Values.prometheus.service.port }}
+          {{- end }}
+          {{- if .Values.grafana.enabled }}
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-grafana
+                port:
+                  number: {{ .Values.grafana.service.port }}
+          {{- end }}
+          {{- if .Values.alertmanager.enabled }}
+          - path: /alertmanager
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-alertmanager
+                port:
+                  number: {{ .Values.alertmanager.service.port }}
+          {{- end }}
+
+---
+# Separate ingress for Quiz Service Swagger UI with path rewriting
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-quiz-swagger
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://team-deployaas.student.k8s.aet.cit.tum.de"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /quiz-service(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-quiz-service
+                port:
+                  number: {{ .Values.quizService.service.port }}
+
+---
+# Separate ingress for Flashcard Service Swagger UI with path rewriting
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-flashcard-swagger
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://team-deployaas.student.k8s.aet.cit.tum.de"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /flashcard-service(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-flashcard-service
+                port:
+                  number: {{ .Values.flashcardService.service.port }}
+
+---
+# Separate ingress for Auth Service Swagger UI with path rewriting
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-auth-swagger
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://team-deployaas.student.k8s.aet.cit.tum.de"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /auth-service(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-auth-service
+                port:
+                  number: {{ .Values.authService.service.port }}
+
+---
+# Separate ingress for GenAI Service docs with path rewriting
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-genai-docs
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://team-deployaas.student.k8s.aet.cit.tum.de"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /genai-service(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-genai-service
+                port:
+                  number: {{ .Values.genaiService.service.port }}
+{{- end }}
