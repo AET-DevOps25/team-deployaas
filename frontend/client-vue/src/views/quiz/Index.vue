@@ -265,6 +265,7 @@ import {
   ArrowRight as ArrowRightIcon,
   BookOpen as BookOpenIcon, // Added BookOpenIcon for navbar
 } from "lucide-vue-next";
+import { apiBaseUrl } from "../../config/api.js";
 
 const route = useRoute();
 const router = useRouter();

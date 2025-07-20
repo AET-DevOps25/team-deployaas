@@ -1,0 +1,23 @@
+{{- if .Values.alertmanager.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-alertmanager-config
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: alertmanager
+data:
+  alertmanager.yml: |
+    global:
+      {{- toYaml .Values.alertmanager.config.global | nindent 6 }}
+
+    route:
+      receiver: {{ .Values.alertmanager.config.route.receiver | quote }}
+      group_by: {{ .Values.alertmanager.config.route.group_by | toYaml | nindent 8 }}
+      group_wait: {{ .Values.alertmanager.config.route.group_wait }}
+      group_interval: {{ .Values.alertmanager.config.route.group_interval }}
+      repeat_interval: {{ .Values.alertmanager.config.route.repeat_interval }}
+
+    receivers:
+      {{- toYaml .Values.alertmanager.config.receivers | nindent 6 }}
+{{- end }}
