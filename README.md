@@ -117,7 +117,7 @@ WEBUI_API_KEY=your-openwebui-api-key
 
 ```bash
 # Start all services
-docker-compose up -d
+docker-compose up -d --build
 
 # Check service status
 docker-compose ps
@@ -202,7 +202,7 @@ docker-compose logs -f
 
 1. Select a created flashcard deck
 2. Click Review
-4. Answer whether the solution you came up with matches with the sample solution
+3. Answer whether the solution you came up with matches with the sample solution
 
 ### Advanced Features
 
