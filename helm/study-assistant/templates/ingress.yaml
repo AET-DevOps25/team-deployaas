@@ -58,6 +58,49 @@ spec:
                 name: {{ include "study-assistant.fullname" . }}-genai-service
                 port:
                   number: {{ .Values.genaiService.service.port }}
+          # Swagger UI endpoints for each service
+          - path: /auth/swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-auth-service
+                port:
+                  number: {{ .Values.authService.service.port }}
+          - path: /auth/api-docs
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-auth-service
+                port:
+                  number: {{ .Values.authService.service.port }}
+          - path: /flashcard/swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-flashcard-service
+                port:
+                  number: {{ .Values.flashcardService.service.port }}
+          - path: /flashcard/api-docs
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-flashcard-service
+                port:
+                  number: {{ .Values.flashcardService.service.port }}
+          - path: /quiz/swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-quiz-service
+                port:
+                  number: {{ .Values.quizService.service.port }}
+          - path: /quiz/api-docs
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-quiz-service
+                port:
+                  number: {{ .Values.quizService.service.port }}
           {{- if .Values.prometheus.enabled }}
           - path: /prometheus
             pathType: Prefix
