@@ -435,7 +435,6 @@ sketch
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 
-
 # Local History for Visual Studio Code
 .history/
 
@@ -456,6 +455,3 @@ sketch
 /server
 
 /.vscode
-*.tfstate
-*.tfstate.backup
-.terraform/
