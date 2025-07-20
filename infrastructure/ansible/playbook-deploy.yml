@@ -58,14 +58,14 @@
     - name: Stop any running containers
       shell: |
         cd {{ app_directory }}
-        sudo docker-compose -f compose.aws.yml down || true
+        sudo docker-compose down || true
       become_user: "{{ deployment_user }}"
       ignore_errors: yes
 
     - name: Remove all Docker images to force rebuild
       shell: |
         cd {{ app_directory }}
-        sudo docker-compose -f compose.aws.yml down --rmi all --volumes --remove-orphans || true
+        sudo docker-compose down --rmi all --volumes --remove-orphans || true
       become_user: "{{ deployment_user }}"
       ignore_errors: yes
 
