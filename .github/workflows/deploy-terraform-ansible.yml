@@ -1,8 +1,8 @@
 name: Deploy to AWS with Terraform + Ansible
 
 on:
-  push:
-    branches: [dev, ansible-terraform, main]
+  # push:
+  #   branches: [dev, ansible-terraform, main]
   workflow_dispatch:
 
 env:
@@ -58,15 +58,15 @@ jobs:
             -var=\"my_ip=${{ steps.get-ip.outputs.current_ip }}\" \
             -var=\"ssh_key=devops.pub\" \
             -var=\"ssh_private_key=~/.ssh/devops.pem\""
-          
+
           # Add local IP if provided
           if [ -n "${{ secrets.LOCAL_IP }}" ]; then
             PLAN_CMD="$PLAN_CMD -var=\"local_ip=${{ secrets.LOCAL_IP }}\""
           fi
-          
+
           # Add output file
           PLAN_CMD="$PLAN_CMD -out=tfplan"
-          
+
           # Execute the plan
           eval $PLAN_CMD
 
@@ -99,13 +99,13 @@ jobs:
         run: |
           # Build ansible command with optional local SSH key
           ANSIBLE_CMD="ansible-playbook -i inventory.ini playbook-simple.yml"
-          
+
           # Add local SSH public key if provided (same key used for deployment)
           if [ -n "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" ]; then
             LOCAL_PUB_KEY=$(ssh-keygen -y -f ~/.ssh/devops.pem)
             ANSIBLE_CMD="$ANSIBLE_CMD -e \"local_ssh_public_key=$LOCAL_PUB_KEY\""
           fi
-          
+
           # Execute the command
           eval $ANSIBLE_CMD
 
