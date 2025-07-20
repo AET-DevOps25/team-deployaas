@@ -322,8 +322,8 @@ const goBackToCourse = () => {
     router.options.history.state?.back === "/home" ||
     document.referrer.includes("/home");
 
-  if (cameFromHome) {
-    // If they came from home, go back to home
+  if (cameFromHome || !courseId) {
+    // If they came from home or we don't have a course ID, go back to home
     router.push("/home");
   } else {
     // Otherwise go to the course detail page (use courseId if available, else default to general courses)
@@ -340,6 +340,8 @@ const submitAnswer = async () => {
   if (!currentAnswer.value.trim()) return;
 
   submittingAnswer.value = true;
+  const quizApiUrl = getQuizApiUrl();
+  
   try {
     const { data: feedback } = await api.post( // Changed fetch to api.post
       `/quiz/questions/${currentQuestion.value.id}/submit`,
@@ -361,6 +363,8 @@ const submitAdvancedAnswer = async () => {
   if (!currentAnswer.value.trim()) return;
 
   submittingAnswer.value = true;
+  const quizApiUrl = getQuizApiUrl();
+  
   try {
     const { data: feedback } = await api.post( // Changed fetch to api.post
       `/quiz/questions/${currentQuestion.value.id}/submit/advanced`,
@@ -411,6 +415,7 @@ const formatTimestamp = (timestamp) => {
 // Fetch data on component mount
 onMounted(async () => {
   const chapterId = route.params.chapterId;
+  const quizApiUrl = getQuizApiUrl();
 
   try {
     // Fetch chapter details

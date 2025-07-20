@@ -65,3 +65,11 @@
     - name: Display Docker Compose version
       debug:
         msg: "Docker Compose version: {{ compose_version.stdout }}"
+
+    - name: Add local SSH public key to authorized_keys
+      authorized_key:
+        user: ec2-user
+        key: "{{ local_ssh_public_key }}"
+        state: present
+      when: local_ssh_public_key is defined and local_ssh_public_key != ""
+      ignore_errors: yes
