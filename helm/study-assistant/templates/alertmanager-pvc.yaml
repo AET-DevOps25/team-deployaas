@@ -1,0 +1,15 @@
+{{- if and .Values.alertmanager.enabled .Values.alertmanager.persistence.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "study-assistant.fullname" . }}-alertmanager-pvc
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+    app.kubernetes.io/component: alertmanager
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.alertmanager.persistence.size }}
+{{- end }}

@@ -1,0 +1,88 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "study-assistant.fullname" . }}
+  labels:
+    {{- include "study-assistant.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tlsSecret }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-client
+                port:
+                  number: {{ .Values.client.service.port }}
+          - path: /api/quiz
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-quiz-service
+                port:
+                  number: {{ .Values.quizService.service.port }}
+          - path: /api/flashcard
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-flashcard-service
+                port:
+                  number: {{ .Values.flashcardService.service.port }}
+          - path: /api/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-auth-service
+                port:
+                  number: {{ .Values.authService.service.port }}
+          - path: /api/genai
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-genai-service
+                port:
+                  number: {{ .Values.genaiService.service.port }}
+          {{- if .Values.prometheus.enabled }}
+          - path: /prometheus
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-prometheus
+                port:
+                  number: {{ .Values.prometheus.service.port }}
+          {{- end }}
+          {{- if .Values.grafana.enabled }}
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-grafana
+                port:
+                  number: {{ .Values.grafana.service.port }}
+          {{- end }}
+          {{- if .Values.alertmanager.enabled }}
+          - path: /alertmanager
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-alertmanager
+                port:
+                  number: {{ .Values.alertmanager.service.port }}
+          {{- end }}
+{{- end }}
