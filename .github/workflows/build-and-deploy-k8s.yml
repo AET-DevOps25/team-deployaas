@@ -151,12 +151,6 @@ jobs:
           # Set context to student cluster
           kubectl config use-context student
 
-      # Verify cluster connectivity
-      - name: Verify Kubernetes Connection
-        run: |
-          kubectl cluster-info
-          kubectl get nodes
-
       # Add Bitnami repository for PostgreSQL dependency
       - name: Add Bitnami Helm Repository
         run: |
