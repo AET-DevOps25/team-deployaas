@@ -58,6 +58,14 @@ spec:
                 name: {{ include "study-assistant.fullname" . }}-genai-service
                 port:
                   number: {{ .Values.genaiService.service.port }}
+          # Main Swagger UI endpoint - defaults to auth service
+          - path: /swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "study-assistant.fullname" . }}-auth-service
+                port:
+                  number: {{ .Values.authService.service.port }}
           # Swagger UI endpoints for each service
           - path: /auth/swagger-ui
             pathType: Prefix
