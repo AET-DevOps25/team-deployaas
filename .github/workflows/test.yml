@@ -1,14 +1,11 @@
 name: Run Tests
 
 on:
-  # Temporarily disabled - uncomment to re-enable automatic tests
-  # push:
-  #   branches: ["**"]
-  # pull_request:
-  #   branches: ["**"]
+   push:
+     branches: ["**"]
+   pull_request:
+     branches: ["**"]
   
-  # Manual trigger only for now
-  workflow_dispatch:
 
 jobs:
   test-java-services:
