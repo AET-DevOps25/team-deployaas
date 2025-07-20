@@ -193,8 +193,12 @@ resource "aws_security_group" "myapp-sg" {
 
 # ======== Key Pair ========
 resource "aws_key_pair" "ssh-key" {
-  key_name   = "devops-key"
+  key_name   = "devops-key-${random_id.key_suffix.hex}"
   public_key = file(var.ssh_key)
+}
+
+resource "random_id" "key_suffix" {
+  byte_length = 4
 }
 
 # ======== EC2 Instance ========
