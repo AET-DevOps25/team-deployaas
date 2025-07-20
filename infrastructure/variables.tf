@@ -42,3 +42,15 @@ variable "my_ip" {
   description = "Your IP address with CIDR notation"
   type        = string
 }
+
+variable "local_ip" {
+  description = "Your local machine IP address with CIDR notation"
+  type        = string
+  default     = ""
+}
+
+variable "local_ssh_key" {
+  description = "Path to your local SSH public key file"
+  type        = string
+  default     = ""
+}

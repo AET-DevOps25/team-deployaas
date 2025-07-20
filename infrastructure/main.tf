@@ -72,11 +72,23 @@ resource "aws_security_group" "myapp-sg" {
   name   = "myapp-sg"
   vpc_id = aws_vpc.myapp-vpc.id
 
+  # SSH access from GitHub runner IP
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.my_ip]
+  }
+
+  # SSH access from local machine IP (if provided)
+  dynamic "ingress" {
+    for_each = var.local_ip != "" ? [1] : []
+    content {
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = [var.local_ip]
+    }
   }
 
   # Frontend (React app)
@@ -183,6 +195,13 @@ resource "aws_security_group" "myapp-sg" {
 resource "aws_key_pair" "ssh-key" {
   key_name   = "devops-key"
   public_key = file(var.ssh_key)
+}
+
+# Local SSH key pair (if provided)
+resource "aws_key_pair" "local-ssh-key" {
+  count      = var.local_ssh_key != "" ? 1 : 0
+  key_name   = "local-devops-key"
+  public_key = file(var.local_ssh_key)
 }
 
 # ======== EC2 Instance ========
