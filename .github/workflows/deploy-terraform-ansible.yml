@@ -38,21 +38,19 @@ jobs:
           CURRENT_IP=$(curl -s ipv4.icanhazip.com)
           echo "current_ip=${CURRENT_IP}/32" >> $GITHUB_OUTPUT
 
-      - name: Generate SSH keys for Terraform
+      - name: Setup SSH keys for Terraform
         run: |
           mkdir -p ~/.ssh
-          # Generate a new SSH key pair specifically for this deployment
-          ssh-keygen -t rsa -b 2048 -f ~/.ssh/devops.pem -N "" -C "github-actions-$(date +%s)"
-          # Copy public key to infrastructure directory for Terraform
-          cp ~/.ssh/devops.pem.pub infrastructure/devops.pub
-          # Set proper permissions
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/devops.pem
           chmod 600 ~/.ssh/devops.pem
-          chmod 644 ~/.ssh/devops.pem.pub
-          # Verify keys were generated
-          echo "Private key:"
-          head -1 ~/.ssh/devops.pem
-          echo "Public key:"
-          cat infrastructure/devops.pub
+          ssh-keygen -y -f ~/.ssh/devops.pem > infrastructure/devops.pub
+          
+          # Setup local SSH key if provided
+          if [ -n "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" ]; then
+            echo "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" > ~/.ssh/local_devops.pem
+            chmod 600 ~/.ssh/local_devops.pem
+            ssh-keygen -y -f ~/.ssh/local_devops.pem > infrastructure/local_devops.pub
+          fi
 
       - name: Terraform Init
         working-directory: infrastructure
@@ -61,11 +59,27 @@ jobs:
       - name: Terraform Plan
         working-directory: infrastructure
         run: |
-          terraform plan \
-            -var="my_ip=${{ steps.get-ip.outputs.current_ip }}" \
-            -var="ssh_key=devops.pub" \
-            -var="ssh_private_key=~/.ssh/devops.pem" \
-            -out=tfplan
+          # Build terraform plan command with required variables
+          PLAN_CMD="terraform plan \
+            -var=\"my_ip=${{ steps.get-ip.outputs.current_ip }}\" \
+            -var=\"ssh_key=devops.pub\" \
+            -var=\"ssh_private_key=~/.ssh/devops.pem\""
+          
+          # Add local IP if provided
+          if [ -n "${{ secrets.LOCAL_IP }}" ]; then
+            PLAN_CMD="$PLAN_CMD -var=\"local_ip=${{ secrets.LOCAL_IP }}\""
+          fi
+          
+          # Add local SSH key if provided
+          if [ -n "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" ]; then
+            PLAN_CMD="$PLAN_CMD -var=\"local_ssh_key=local_devops.pub\""
+          fi
+          
+          # Add output file
+          PLAN_CMD="$PLAN_CMD -out=tfplan"
+          
+          # Execute the plan
+          eval $PLAN_CMD
 
       - name: Terraform Apply
         working-directory: infrastructure
@@ -94,13 +108,24 @@ jobs:
       - name: Run initial server setup
         working-directory: infrastructure/ansible
         run: |
-          ansible-playbook -i inventory.ini playbook-simple.yml
+          # Build ansible command with optional local SSH key
+          ANSIBLE_CMD="ansible-playbook -i inventory.ini playbook-simple.yml"
+          
+          # Add local SSH public key if provided
+          if [ -n "${{ secrets.LOCAL_SSH_PRIVATE_KEY }}" ]; then
+            LOCAL_PUB_KEY=$(ssh-keygen -y -f ~/.ssh/local_devops.pem)
+            ANSIBLE_CMD="$ANSIBLE_CMD -e \"local_ssh_public_key=$LOCAL_PUB_KEY\""
+          fi
+          
+          # Execute the command
+          eval $ANSIBLE_CMD
 
       - name: Run application deployment
         working-directory: infrastructure/ansible
         run: |
           ansible-playbook -i inventory.ini playbook-deploy.yml \
-            -e "openai_api_key=${{ secrets.OPENAI_API_KEY }}"
+            -e "openai_api_key=${{ secrets.OPENAI_API_KEY }}" \
+            -v
 
       - name: Display deployment info
         run: |
