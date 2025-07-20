@@ -2,6 +2,13 @@ tumid: dev
 
 # LOCAL DEVELOPMENT VALUES - DO NOT USE IN PRODUCTION
 
+# Secrets configuration
+secrets:
+  postgresPassword: "changeme123"
+  jwtSecret: "my-secret-key-for-jwt-tokens-which-should-be-longer-and-more-secure"
+  genaiApiKey: "sk-de1b5dfd9ef14dc798d1d121a2128512"
+  grafanaPassword: "admin"
+
 namespace:
   create: false
 
