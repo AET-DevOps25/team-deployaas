@@ -28,7 +28,7 @@ services:
     volumes:
       - ./database/pgadmin4/servers.json:/pgadmin4/servers.json:ro
 
-  quiz-service:
+  study-assistant-quiz-service:
     build: ./quiz-service
     container_name: studyapp_quiz_service
     restart: always
@@ -36,15 +36,15 @@ services:
       - "8081:8081" # Expose Quiz Service directly on host port 8081
     depends_on:
       - db
-      - genai-service
+      - study-assistant-genai-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/initexample
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
-      - GENAI_SERVICE_URL=http://genai-service:5001 # Internal communication uses service name and internal port
+      - GENAI_SERVICE_URL=http://study-assistant-genai-service:5001 # Internal communication uses service name and internal port
 
-  flashcard-service:
+  study-assistant-flashcard-service:
     build: ./flashcard-service
     container_name: studyapp_flashcard_service
     restart: always
@@ -57,8 +57,9 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - QUIZ_SERVICE_URL=http://study-assistant-quiz-service:8081
 
-  auth-service:
+  study-assistant-auth-service:
     build: ./auth-service
     container_name: studyapp_auth_service
     restart: always
@@ -72,7 +73,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
 
-  genai-service:
+  study-assistant-genai-service:
     build: ./genai-service
     container_name: studyapp_genai_service
     restart: always
@@ -96,10 +97,10 @@ services:
     ports:
       - "3000:80" # Expose Vue Client directly on host port 3000 
     depends_on:
-      - auth-service
-      - quiz-service
-      - flashcard-service
-      - genai-service
+      - study-assistant-auth-service
+      - study-assistant-quiz-service
+      - study-assistant-flashcard-service
+      - study-assistant-genai-service
 
   prometheus:
     image: prom/prometheus:v2.52.0
@@ -114,10 +115,10 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
     depends_on: # Ensure application services are up before Prometheus tries to scrape
-      - auth-service
-      - quiz-service
-      - flashcard-service
-      - genai-service
+      - study-assistant-auth-service
+      - study-assistant-quiz-service
+      - study-assistant-flashcard-service
+      - study-assistant-genai-service
 
   grafana:
     image: grafana/grafana:10.2.2
